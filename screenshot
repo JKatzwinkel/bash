@@ -1,0 +1,20 @@
+#!/bin/bash
+
+cd massnahmen/screenshots
+
+d=$(date +%y%m%d)
+
+c=1
+i=$(printf "%03d\n" $c)
+fn=$(echo "${d}_${i}.png")
+
+while [ -e $fn ]; do
+	c=$((c+1))
+	i=$(printf "%03d\n" $c)
+	fn=$(echo "${d}_${i}.png")
+done
+
+mv $1 $fn
+echo "$fn $(date "+%d.%m.%Y %T")" >> list
+
+
