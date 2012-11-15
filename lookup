@@ -1,0 +1,64 @@
+#!/bin/bash
+
+last=${@:$#:1}
+
+inner=$(( $# - 2 ))
+
+
+if [ $# -lt 1 ]; then
+	echo "no search terms given"
+	echo "requires at least one search term"
+	echo "optional flag -a as last parameter invokes search only for lines containing ALL terms"
+	exit 1
+fi
+
+echo $inner
+
+
+# -a means: search for line containing ALL search terms instead of OR
+if [ "$last" == "-a" ]; then
+	if [ $# -lt 2 ]; then
+		echo "no search terms given"
+		exit 1
+	fi
+
+	inner=$(( $# - 3 ))
+	lasttermno=$(( $# - 1 ))
+
+	if [ $inner -ge 0 ]; then
+		query="$1"
+		for term in ${@:2:$inner}; do
+			query="$query.*$term"
+		done
+		query="$query.*${@:$lasttermno:1}"
+	else
+		query=$1
+	fi
+else
+# assemble search terms to regex looking for at least one of them
+	if [ $inner -ge 0 ]; then
+		query="\($1"
+		for term in ${@:2:$inner}; do
+			query="$query\|$term"
+		done
+		query="$query\|${@:$#:1}\)"
+		echo $query
+	else
+		query=$1
+	fi
+fi
+
+
+# search for query string in available pdf files pagewise
+for i in *.pdf; do
+	pagenr=$(pdfinfo "$i" | grep Pages | grep -o "[0-9][0-9]*")
+	fileid="\n$i\n"
+	for (( p=1; p<=pagenr; p++ )); do
+		text=$(pdftotext -q -f $p -l $p "$i" - )
+		if [ -n "$(echo "$text" | grep "$query")" ]; then
+			echo -e "${fileid}PAGE: $p"
+			echo "$text" | grep --color=always -in "$query"
+			fileid=""
+		fi
+	done
+done
