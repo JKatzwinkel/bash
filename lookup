@@ -12,9 +12,6 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
-echo $inner
-
-
 # -a means: search for line containing ALL search terms instead of OR
 if [ "$last" == "-a" ]; then
 	if [ $# -lt 2 ]; then
@@ -48,16 +45,15 @@ else
 	fi
 fi
 
-
 # search for query string in available pdf files pagewise
 for i in *.pdf; do
 	pagenr=$(pdfinfo "$i" | grep Pages | grep -o "[0-9][0-9]*")
 	fileid="\n$i\n"
 	for (( p=1; p<=pagenr; p++ )); do
-		text=$(pdftotext -q -f $p -l $p "$i" - )
-		if [ -n "$(echo "$text" | grep "$query")" ]; then
+		matches=$(pdftotext -q -f $p -l $p "$i" - | grep --color=always -in "$query")
+		if [ -n "$matches" ]; then
 			echo -e "${fileid}PAGE: $p"
-			echo "$text" | grep --color=always -in "$query"
+			echo "$matches"
 			fileid=""
 		fi
 	done
