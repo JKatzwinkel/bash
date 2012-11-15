@@ -19,3 +19,6 @@ text contents of every pdf file in the current directory. Default behaviour
 prints every occurrence of *any* of the terms. Using the option `-a` as the
 last parameter switches to AND mode, in which only occurrences of *all* terms
 within a single line are matched. 
+
+> Fun Fact: it is actually possible to store the output of a 
+> `grep --color=always ...` into a variable and `echo` the colored output
