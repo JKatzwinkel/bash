@@ -5,8 +5,9 @@ retumb="[[:alnum:]_\-]*\.tumblr\.com"
 sourcesglb=../sources
 sourceslcl=sources
 sourcesprm=$sourcesglb
-double_entry=$sourceslcl;
+double_entry=$sourceslcl
 verbose=
+dlnum=$(( 100 ))
 
 function print_manual () {
     echo "usage: tumblr [OPTIONS] BLOG[.tumblr.com] [BLOG2[.tumblr.com] ...]"
@@ -23,6 +24,9 @@ function print_manual () {
     echo "    -d"
     echo "    keep track of image sources both locally and globally"
     echo "        download all images not listed in the local sources file"
+    echo "    -n [NUM]"
+    echo "        limit number of images to download to NUM"
+    echo "        default: 100"
     echo "    -v"
     echo "        verbose output"
     echo "    -h"
@@ -30,9 +34,9 @@ function print_manual () {
 }
 
 function save_reference() {
-    if [ -z $(grep -o $1 "$3") ]; then
-        featured=$(grep $1 "$3" | cut -d' ' -f2)
-        if [ -z $(echo $featured | grep $1) ]; then
+    if [ ! -z "$(grep -o "$1" "$3")" ]; then
+        featured=$(grep "$1" "$3" | cut -d' ' -f2)
+        if [ -z $(echo $featured | grep -o "$2") ]; then
             sed -i "s/$1 $retumb/&,$2/" "$3"
         fi
     else
@@ -42,12 +46,13 @@ function save_reference() {
 
 
 
-set -- $(getopt -- "-lgdvh" $@)
+set -- $(getopt -- "-lgdvhn:" $@)
 while [ $# -gt 0 ]; do
     case $1 in 
         (-g) sourcesprm=$sourcesglb; double_entry=$sourceslcl;;
         (-l) sourcesprm=$sourceslcl; double_entry="";;
         (-d) sourcesprm=$sourceslcl; double_entry=$sourcesglb;;
+        (-n) dlnum=$(echo $2 | tr -d "'"); shift;;
         (-h) print_manual; exit 0;;
         (-v) verbose=true;;
         (--) shift; break;;
@@ -97,8 +102,8 @@ if [ ! -f "$dir/tumbs" ]; then
     touch "$dir/tumbs"
 fi
 
-for blog in $(echo $blogs | grep -o "[[:alnum:]_\-]*\.tumblr\.com,"); do
-    blog=$(echo "$blog" | tr -d ",")
+for blog in $(echo $blogs | grep -o "$retumb"); do
+    #blog=$(echo "$blog" | tr -d ",")
     if [ -z $(grep "$blog" "$dir/tumbs" | head -1) ]; then
         echo "$blog" >> "$dir/tumbs"
     fi
@@ -144,18 +149,27 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
             name=$(echo $url | grep -io "tumblr_\([0-9a-z_\-]*\)\.\(jpg\|png\|gif\)" )
 
             if [ ! -z $url ]; then
-                if [ -z $(grep -o $name "$sourcesprm") ]; then
+                if [ -z "$(grep "$name" "$sourcesprm")" ]; then
                     wget -q $url -O "img/$name"
                     downloads=$(( $downloads+1 ))
-                    echo -ne "\r$tumb "
+                    echo -ne "\r$total+$tumb "
                     for i in $(seq 1 $downloads); do
                         echo -n "."
                     done
                     echo "$name $tumb" >> "$sourcesprm"
                 else
                     featured=$(grep $name "$sourcesprm" | cut -d' ' -f2)
-                    echo -e "\r $name is already known from $featured"
-                    if [ -z $(echo $featured | grep $tumb) ]; then
+                    if [ $verbose ]; then
+                        echo -en "\r $name known from "
+                        echo -en "$(echo "$featured" | grep -o "$retumb" | head -1 | cut -d'.' -f1) "
+                        tms=$(echo "$featured" | grep -o "$retumb" | wc -l)
+                        if [ $tms -gt 1 ]; then
+                            echo "and others (+$(( tms-1 )))"
+                        else
+                            echo ""
+                        fi
+                    fi
+                    if [ -z "$(echo $featured | grep $tumb | head -1)" ]; then
                         sed -i "s/$name $retumb/&,$tumb/" "$sourcesprm"
                     fi
                 fi
@@ -166,20 +180,20 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
         done
 
 
-        echo -en "\r$tumb ($downloads)"
+        echo -en "\r$total+$tumb ($downloads)"
         for i in $(seq 1 $downloads); do
             echo -n " "
         done
         echo ""
 
         for link in $(echo $html | grep -o "$retumb"); do
-            if [ -z $(grep -o "$link" "tumbs" | head -1) ]; then
+            if [ -z "$(grep -o "$link" "tumbs" | head -1)" ]; then
                 echo $link >> "tumbs"
             fi
         done
 
         total=$(( total+downloads ))
-        if [ $(( total )) -ge $(( 100 )) ]; then
+        if [ $(( total )) -ge $(( dlnum )) ]; then
             echo "downloaded $total images"
             exit
         fi

@@ -19,17 +19,16 @@ function print_manual () {
 }
 
 function merge_files () {
-    file1=$1
-    file2=$2
     c=$(( 0 ))
-    t=$( wc -l $file1 )
+    t=$( wc -l $1 )
+    results=""
     while read line; do
 
         dat=( $(echo $line | grep -o "[^ ]*")  )
         img=${dat[0]}
         blogs=${dat[1]}
 
-        line2=$(grep $img $file2)
+        line2=$(grep $img $2 | head -1)
         merge="$line2"
 
         if [ ! -z "$line2" ]; then
@@ -38,23 +37,25 @@ function merge_files () {
                     merge="$merge,$blog"
                 fi
             done
+            sed -i "s/$line2/$merge/" $2
         else
-            merge=$line
-        fi
-
-
-        if [ ! -z "$line2" ]; then
-            sed -i "s/$line2/$merge/" $file2
-        else
-            echo $merge >> $file2
+            #echo $line >> $file2
+            echo "$line" >> $2
         fi
 
         c=$(( c+1 ))
         printf "%3.3d" $c
         printf "/$t\r"
 
-    done < $file1
+    done < $1
     echo ""
+    # IFSbck=$IFS
+    # IFS=$(echo -en "\n\b")
+    # for line in "$(echo -ne $results)"; do
+    #     echo "$line" >> $2
+    # done
+    # echo ""
+    # IFS=$IFSbck
 }
 
 set -- $(getopt -- "-vho:" $@)
@@ -73,6 +74,15 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+if [ -d "$file1" ]; then
+    file1="$(echo $file1 | grep -o ".*[^/]")/sources"
+fi
+if [ -d "$file2" ]; then
+    file2="$(echo $file2 | grep -o ".*[^/]")/sources"
+fi
+
+
+
 if [ ! $output ]; then
     output=$file2
 else
@@ -86,13 +96,6 @@ else
             exit 1
         fi
     fi
-fi
-
-if [ -d "$file1" ]; then
-    file1="$(echo $file1 | grep -o ".*[^/]")/sources"
-fi
-if [ -d "$file2" ]; then
-    file2="$(echo $file2 | grep -o ".*[^/]")/sources"
 fi
 
 if [ -f "$file1" ]; then
@@ -118,12 +121,11 @@ if [ $verbose ]; then
     echo "total lines to merge: $(cat $file1 $file2 | wc -l)"
 fi
 
-if [[ "$output" == "$file2" ]]; then
-    merge_files $file1 $file2
-else
-    cat $file2 > $output
-    merge_files $file1 $output
-fi
+tmp=$(date | md5sum | cut -d' ' -f1)
+touch $tmp
+merge_files $file2 $tmp
+merge_files $file1 $tmp
+mv $tmp $output
 
 if [ $verbose ]; then
     echo "merge complete"
