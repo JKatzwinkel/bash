@@ -1,2 +1,13 @@
 # read file line by line
 while read line; do ...; done < filename
+
+# reduce pdf file size
+gs -sDEVICE=pdfwrite -dPDFSETTINGS=/screen -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=output.pdf input.pdf
+
+# bashrc: set terminal window title to current directory:
+PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
+
+# arrays:
+arr=( $(echo "eins zwei" | grep -o "[^ ]*") )
+echo ${arr[@]} #entire array
+echo ${#arr[@]} #length
