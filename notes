@@ -11,6 +11,13 @@ PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
 arr=( $(echo "eins zwei" | grep -o "[^ ]*") )
 echo ${arr[@]} #entire array
 echo ${#arr[@]} #length
+#fixed prefix:
+array=$( "${array[@]/%/_content}" )
 
 # format numbers:
 printf "%3.3d" $x # trailing 0s, 3 digits
+
+# set permissions recursively to 755 for directories and to 644 for files
+# chmod u+X on a file won't set the execute bit; and g+X will only set it 
+# if it's already set for the user
+chmod -R u+rwX,go+rX,go-w /path
