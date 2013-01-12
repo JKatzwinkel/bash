@@ -2,6 +2,7 @@
 #!/bin/bash
 
 retumb="[[:alnum:]_\-]*\.tumblr\.com"
+resnumber=$(( 50 ))
 
 function print_manual () {
     echo "usage: fav [OPTIONS] BLOG[.tumblr.com] [BLOG2[.tumblr.com] ...]"
@@ -23,8 +24,15 @@ function print_manual () {
     echo "........to the given destination (not implemented)"
     echo "    -n [NUM]"
     echo "        rather than limiting the result list to 50"
-    echo "        by default, return at most NUM blogs (not"
-    echo "        implemented)"
+    echo "        by default, return at most NUM blogs "
+    echo "    -p"
+    echo "        if this option is set, the most popular blogs are not"
+    echo "        determined by their absolute number of featured images"
+    echo "        found on disk, but by an index normalized by their"
+    echo "        respective occurences in the local source file."
+    echo "        that is, computing the ratio between every image ever"
+    echo "        featured by that blog and the number of images that"
+    echo "        the user did actually approve of."    
     echo "    -v"
     echo "        verbose output"
     echo "    -h"
@@ -43,12 +51,13 @@ function merge_lists () {
     echo -en "$mrg"
 }
 
-set -- $(getopt -- "-lvht:" $@)
+set -- $(getopt -- "-lvhpt:n:" $@)
 while [ $# -gt 0 ]; do
     case $1 in 
         (-l) localsrc=true;;
         (-t) output=$2; shift;;
-        (-n) resnumber=$2; shift;;
+        (-n) resnumber=$(echo $2 | tr -d "'"); shift;;
+        (-p) proportion=true;;
         (-h) print_manual; exit 0;;
         (-v) verbose=true;;
         (--) shift; break;;
@@ -68,9 +77,10 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-echo "$blog" > $dir/tumbs
-echo "" > $dir/fav
+echo -n "" > $dir/fav
+echo -n "" > $dir/tumbs
 
+# begin computation of tumblr/image index
 for i in $dir/img/*; do
 
 	img=$(echo $i | cut -d '/' -f 3)
@@ -82,7 +92,6 @@ for i in $dir/img/*; do
         srcglb=""
     fi
 	for s in $(merge_lists $src $srcglb); do
-		#echo $s;
 		ent=$(grep $s $dir/fav)
 		if [ ! -z "$ent" ]; then
 			cnt=$(echo $ent | cut -d ' ' -f 1 | grep -o "[1-9][0-9]*")
@@ -94,14 +103,32 @@ for i in $dir/img/*; do
 	done
 done
 
+# if proportion option -p is set, normalize index over tumblr occurence
+# count
+if [ $proportion ]; then
+	fill="000"
+	while read line; do
+		fields=( $(echo $line | grep -o "[^ ]*") )
+		count="$(echo ${fields[0]} | grep -o "[1-9][0-9]*")"
+		total="$(grep ${fields[1]} $dir/sources | wc -l)"
+		if [ $total -gt "0" ]; then
+			ratio=$(( 100*$count/$total ))
+		else
+			ratio=$(( 0 ))
+		fi
+		ratio=$(echo "${fill:${#ratio}}$ratio")
+		index=$(echo "$ratio:$count:$total")
+		sed -i "s/.*${fields[1]}$/$index ${fields[1]}/g" $dir/fav
+	done < $dir/fav
+fi
 
 
-
-for tmb in $(cat $dir/fav | sort -r | head -50); do
+# save list of tumblrs sort by image index
+for tmb in $(cat $dir/fav | sort -r | head -$resnumber); do
 
     if [ $verbose ]; then
         if [ -z "$(echo $tmb | grep $retumb)" ]; then
-            count="($(echo $tmb | grep -o "[1-9][0-9]*"))"
+            count="($(echo $tmb | grep -o "[1-9][0-9:]*"))"
         else
             echo "$tmb $count"
         fi
@@ -111,3 +138,7 @@ for tmb in $(cat $dir/fav | sort -r | head -50); do
 	echo $tmb | grep "$retumb" >> $dir/tumbs
 
 done
+
+if [ -z $(grep $blog $dir/tumbs | head -1) ]; then
+	echo "$blog" >> $dir/tumbs
+fi
