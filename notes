@@ -17,6 +17,9 @@ array=$( "${array[@]/%/_content}" )
 # format numbers:
 printf "%3.3d" $x # trailing 0s, 3 digits
 
+# floating numbers:
+ratio=$(echo "scale=2; $count/$total" | bc)
+
 # set permissions recursively to 755 for directories and to 644 for files
 # chmod u+X on a file won't set the execute bit; and g+X will only set it 
 # if it's already set for the user
