@@ -66,6 +66,7 @@ while [ $# -gt 0 ]; do
         (-v) verbose=true;;
         (--) shift; break;;
         (*) blog=$( echo $1 | tr -d "\\/\'");
+			blog=${blog#http:}
             if [ -z $(echo $blog | grep "\.tumblr\.com") ]; then
                 dir="$blog"
                 blog="$blog.tumblr.com"
@@ -110,6 +111,12 @@ fi
 if [ ! -f "$dir/tumbs" ]; then
     touch "$dir/tumbs"
 fi
+if [ ! -f "$dir/$double_entry" ]; then
+	touch "$dir/$double_entry"
+    if [ $verbose ]; then
+        echo "creating secondary source file $dir/$double_entry"
+    fi
+fi
 
 for blog in $(echo $blogs | grep -o "$retumb"); do
     #blog=$(echo "$blog" | tr -d ",")
@@ -132,18 +139,17 @@ if [ ! -f "$sourcesprm" ]; then
 fi
 
 ff=( $(echo $formats | grep -o "[^,]\+") )
+freg="${ff[0]}"
+for i in ${ff[@]:1}; do
+	freg="$freg\|${i}"
+done
+formats="\($freg\)"
 
 if [ $verbose ]; then
     echo "number of blogs listed to be visited: $(wc -l tumbs)"
-    echo "image formats that will be downloaded: ${ff[@]}"
+    echo "image formats that will be downloaded: ${ff[@]} - $formats"
 fi
 
-freg="${ff[0]}"
-#for ((i=1;i<$(( ${#ff[@]} ));i++)); do
-for i in ${ff[@]:1}; do
-	freg="$freg|\|${i}"
-done
-formats="\($freg\)"
 
 
 # total download count
@@ -163,8 +169,7 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
         html=$(wget -q $tumb -O - )
 
         downloads=$(( 0 ))
-        for img in $(echo $html | grep -io "img src=\"http://\([0-9a-z_\-]*[\./]\)*$formats" ); do
-
+        for img in $(echo $html | grep -io "img src=[\"\']http://[0-9]\{2\}\.media\.tumblr\.com/tumblr_\([0-9a-z_]*\)\.$formats" ); do
             url=$(echo $img | grep -io "http://[0-9]\{2\}\.media\.tumblr\.com/tumblr_\([0-9a-z_]*\)\.$formats" )
             name=$(echo $url | grep -io "tumblr_\([0-9a-z_\-]*\)\.$formats" )
 
