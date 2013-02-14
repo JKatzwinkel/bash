@@ -16,9 +16,14 @@ array=$( "${array[@]/%/_content}" )
 
 # format numbers:
 printf "%3.3d" $x # trailing 0s, 3 digits
+printf "%x\n" $decimal #hex value
+printf "%x %o\n" 0224 0x94 #hex representation of octal number 224, octal of 94 hex
 
 # floating numbers:
 ratio=$(echo "scale=2; $count/$total" | bc)
+
+# hexdump:
+echo bla | hexdump -C
 
 # set permissions recursively to 755 for directories and to 644 for files
 # chmod u+X on a file won't set the execute bit; and g+X will only set it 
