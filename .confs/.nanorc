@@ -1,0 +1,9 @@
+set tabsize 3
+set autoindent
+set const
+set regexp
+set mouse
+set nonewlines
+set smarthome
+set smooth
+
