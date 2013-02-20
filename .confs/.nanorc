@@ -1,9 +1,32 @@
-set tabsize 3
+# better syntax highlighting:
+# https://github.com/craigbarnes/nanorc
+# provides syntax highlighting for markdown, as it seems!
+# will overwrite! custom ~/.nanorc, so backup.
+# will also overwrite default key bindings, so ^O will suddenly be insert main,
+# ^X will be cut,
+# ^V uncut,
+# ^Z undo,
+# ^Y redo,
+# ^F both whereis & regex search (but between which can be switched with ^R),
+# ^L goto line,
+# ^A mark text
+# quit command will be bound to ^Q,
+# save bound to ^S,
+# cancel bound to ^W
+# key bindings help bar will be disabled, so search for 'set nohelp' to change
+# syntax highlighting looks kinda weird, but seems to act quite smart
+# to deactivate highlighting of trailing whitespaces, search for 'Show trailing whitespace'
+# copy of modified resulting .nanorc is in .nanorc.github
+set tabsize 2
 set autoindent
 set const
 set regexp
-set mouse
 set nonewlines
 set smarthome
 set smooth
+set morespace
+set nowrap
+set matchbrackets "(<[{)>]}"
+set undo
+set backup
 
