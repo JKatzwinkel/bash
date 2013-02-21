@@ -1,5 +1,6 @@
 # better syntax highlighting:
-# https://github.com/craigbarnes/nanorc
+# https://github.com/craigbarnes/nanorc, 
+# git://github.com/craigbarnes/nanorc.git
 # provides syntax highlighting for markdown, as it seems!
 # will overwrite! custom ~/.nanorc, so backup.
 # will also overwrite default key bindings, so ^O will suddenly be insert main,

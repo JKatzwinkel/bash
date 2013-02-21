@@ -418,8 +418,8 @@ bind ^] findbracket main
 
 # Default highlighting
 syntax "default"
-color ,green "[[:space:]]+$"
-color ,red "	+"
+color ,green "[[:space:]][[:space:]]+$"
+color ,red "[^	]	+$"
 syntax "makefile" "([Mm]akefile|\.ma?k)$"
 header "^#!.*/(env +)?[bg]?make( |$)"
 
@@ -624,7 +624,7 @@ color magenta   "\\.?"
 color cyan "(^|[[:space:]])#([^{].*)?$"
 color brightwhite,cyan "TODO:?"
 color ,green "[[:space:]]+$"
-color ,red "	+"
+color ,red "	+$"
 syntax "rpmspec" "\.spec$" "\.rpmspec$"
 
 color brightblack  "\<(Icon|ExclusiveOs|ExcludeOs):"
