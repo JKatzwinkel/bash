@@ -37,4 +37,16 @@ echo bla | hexdump -C
 chmod -R u+rwX,go+rX,go-w /path
 
 # set:
-set -- path/*/someglob.txt # assign matching filenames to $1, $2, .. $*
+set -- path/*/someglob.txt # assign matching filenames to $1, $2,.. ($* or $@)
+
+# sed:
+# inserting text before or after every line that matches a line number
+# or the given pattern: (replace 'i' with 'a' to append)
+sed -i '1 i\line to insert' file  #insert 'line to insert' right
+sed -i '1iline to insert' file    #before the first line in file
+sed -i '/pattern/ i\new line' file  #insert text before every line
+sed -i '/pattern/inew line' file    #matching the pattern
+sed -i '$aLast Line' file         # appending text after last line in file
+
+# create a backup file when editing in place:
+sed -i~
