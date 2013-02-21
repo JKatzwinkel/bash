@@ -21,6 +21,10 @@
 # note that while it may seem the other way around, the syntax keyword
 # specifies to which file names the _following_ parameters apply, not the
 # preceding ones!!!
+#
+# Useful default keybindings:
+# Use Alt+a to select a block, then Alt+} will indent the selected block, 
+# and Alt+{ will outdent the block.
 set tabsize 2
 set autoindent
 set const
