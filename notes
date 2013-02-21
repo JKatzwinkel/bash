@@ -35,3 +35,6 @@ echo bla | hexdump -C
 # chmod u+X on a file won't set the execute bit; and g+X will only set it 
 # if it's already set for the user
 chmod -R u+rwX,go+rX,go-w /path
+
+# set:
+set -- path/*/someglob.txt # assign matching filenames to $1, $2, .. $*

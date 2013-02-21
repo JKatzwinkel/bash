@@ -17,6 +17,9 @@
 # syntax highlighting looks kinda weird, but seems to act quite smart
 # to deactivate highlighting of trailing whitespaces, search for 'Show trailing whitespace'
 # copy of modified resulting .nanorc is in .nanorc.github
+# note that while it may seem the other way around, the syntax keyword
+# specifies to which file names the _following_ parameters apply, not the
+# preceding ones!!!
 set tabsize 2
 set autoindent
 set const
