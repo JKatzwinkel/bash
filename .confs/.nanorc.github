@@ -366,7 +366,7 @@ color cyan  start="\-\-\[\[" end="\]\]"
 color brightwhite,cyan "TODO:?"
 color ,green "[[:space:]]+$"
 color ,red "	+"
-#set tabstospaces # Tab key inserts spaces (Ctrl+t for verbatim mode)
+# set tabstospaces # Tab key inserts spaces (Ctrl+t for verbatim mode)
 set tabsize 2    # Insert 4 spaces per tab
 set fill 76      # Justify command (Ctrl+j) wraps at 76 columns
 set autoindent   # Jump to the current indent level after inserting a newline
@@ -377,7 +377,7 @@ set historylog   # Remember command history
 set undo         # Enable undo/redo features
 set smooth       # Scroll one line at a time
 set const        # Show cursor position at the bottom of the screen
-#set nohelp       # Remove the help bar from the bottom of the screen
+# set nohelp       # Remove the help bar from the bottom of the screen
 set regexp       # Enable regular expression mode for find (Ctrl+r to disable)
 
 # Annoyances
@@ -419,7 +419,7 @@ bind ^] findbracket main
 # Default highlighting
 syntax "default"
 color ,green "[[:space:]][[:space:]]+$"
-color ,red "[^	]	+$"
+color ,red "[^	]	+"
 syntax "makefile" "([Mm]akefile|\.ma?k)$"
 header "^#!.*/(env +)?[bg]?make( |$)"
 
@@ -610,7 +610,7 @@ color brightblack  "\<(as|assert|break|class|continue|def|del|elif|else|except)\
 color brightblack  "\<(exec|finally|for|from|global|if|import|lambda)\>"
 color brightblack  "\<(pass|print|raise|return|try|while|with|yield|None)\>"
 color brightblue "[A-Za-z_][A-Za-z0-9_]*[[:space:]]*[(]"
-color black    "[(]"
+color black    "[()]"
 color red "[-+*/|=%<>&~^]|\<(and|not|or|is|in)\>"
 color brightyellow    "@[A-Za-z0-9_]+"
 color brightmagenta  "__[A-Za-z0-9_]+__"
@@ -623,8 +623,8 @@ color yellow   start="'''[^']" end="'''"
 color magenta   "\\.?"
 color cyan "(^|[[:space:]])#([^{].*)?$"
 color brightwhite,cyan "TODO:?"
-color ,green "[[:space:]]+$"
-color ,red "	+$"
+color ,green "[[:space:]][[:space:]]+$"
+color ,red "[^	]+	+"
 syntax "rpmspec" "\.spec$" "\.rpmspec$"
 
 color brightblack  "\<(Icon|ExclusiveOs|ExcludeOs):"
