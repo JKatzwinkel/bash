@@ -193,6 +193,8 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
                         else
                             echo ""
                         fi
+                    else
+                    	echo -n "_"
                     fi
                     if [ -z "$(echo $featured | grep $tumb | head -1)" ]; then
                         sed -i "s/$name $retumb/&,$tumb/" "$sourcesprm"
