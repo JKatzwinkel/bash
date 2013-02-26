@@ -168,6 +168,7 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
 
         html=$(wget -q $tumb -O - )
 
+        #TODO: if no links can be extracted, flag this blog to be unreadible somehow
         downloads=$(( 0 ))
         for img in $(echo $html | grep -io "img src=[\"\']http://[0-9]\{2\}\.media\.tumblr\.com/tumblr_\([0-9a-z_]*\)\.$formats" ); do
             url=$(echo $img | grep -io "http://[0-9]\{2\}\.media\.tumblr\.com/tumblr_\([0-9a-z_]*\)\.$formats" )
@@ -193,6 +194,8 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
                         else
                             echo ""
                         fi
+                    else
+                    	echo -n "_"
                     fi
                     if [ -z "$(echo $featured | grep $tumb | head -1)" ]; then
                         sed -i "s/$name $retumb/&,$tumb/" "$sourcesprm"
