@@ -23,8 +23,12 @@
 # preceding ones!!!
 #
 # Useful default keybindings:
-# Use Alt+a to select a block, then Alt+} will indent the selected block, 
+# Use Alt+a to select a block, then Alt+} will indent the selected block,
 # and Alt+{ will outdent the block.
+#
+# Legal colors for foreground and background color are:
+# white, black, red, blue, green, yellow, magenta, and cyan.
+# You may use the prefix "bright" to force a stronger color highlight
 set tabsize 2
 set autoindent
 set const
