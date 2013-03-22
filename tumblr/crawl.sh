@@ -59,14 +59,14 @@ while [ $# -gt 0 ]; do
         (-n) dlnum=$(echo $2 | tr -d "'"); shift;;
         (-h) print_manual; exit 0;;
         (-e) ignored=( $(echo $2 | tr -d "'" | grep -o "[^,]*") );
-			for format in ${ignored[@]}; do
-				formats=$(echo $formats | sed "s/$format//")
-			done;
-			shift;;
+      for format in ${ignored[@]}; do
+        formats=$(echo $formats | sed "s/$format//")
+      done;
+        shift;;
         (-v) verbose=true;;
         (--) shift; break;;
         (*) blog=$( echo $1 | tr -d "\\/\'");
-			blog=${blog#http:}
+        blog=${blog#http:}
             if [ -z $(echo $blog | grep "\.tumblr\.com") ]; then
                 dir="$blog"
                 blog="$blog.tumblr.com"
@@ -167,53 +167,56 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
     tumb=$( sed -n "${line}p" "tumbs")
 
     if [ -z $(echo $tumb | grep "\(www\|assets\|media\|staff\|static\)\.") ]; then
-
-        echo -ne "$total+ $tumb"
-
+        echo -ne "\r$total+ $(echo -ne "$tumb" | cut -d '.' -f 1)..."
+        
         html=$(wget -q $tumb -O - )
 
         #TODO: if no links can be extracted, flag this blog to be unreadible somehow
         downloads=$(( 0 ))
+        progress=""
         for img in $(echo $html | grep -io "$reimg" ); do
-            url=$(echo $img | grep -io "$reimgsrc" )
-            name=$(echo $url | grep -io "tumblr_\([0-9a-z_\-]*\)\.$formats" )
+          echo -ne "\r$total+ $tumb $progress"
+            
+					url=$(echo $img | grep -io "$reimgsrc" )
+					name=$(echo $url | grep -io "tumblr_\([0-9a-z_\-]*\)\.$formats" )
 
-            if [ ! -z $url ]; then
-                if [ -z "$(grep "$name" "$sourcesprm")" ]; then
-                    wget -q $url -O "img/$name"
-                    downloads=$(( $downloads+1 ))
-                    echo -ne "\r$total+ $tumb "
-                    for i in $(seq 1 $downloads); do
-                        echo -n "."
-                    done
-                    echo "$name $tumb" >> "$sourcesprm"
-                else
-                    featured=$(grep $name "$sourcesprm" | cut -d' ' -f2)
-                    if [ $verbose ]; then
-                        echo -en "\r $name known from "
-                        echo -en "$(echo "$featured" | grep -o "$retumb" | head -1 | cut -d'.' -f1) "
-                        tms=$(echo "$featured" | grep -o "$retumb" | wc -l)
-                        if [ $tms -gt 1 ]; then
-                            echo "and others (+$(( tms-1 )))"
-                        else
-                            echo ""
-                        fi
-                    else
-                    	echo -n "_"
-                    fi
-                    if [ -z "$(echo $featured | grep $tumb | head -1)" ]; then
-                        sed -i "s/$name $retumb/&,$tumb/" "$sourcesprm"
-                    fi
-                fi
-                if [ ! -z $double_entry ]; then
-                    save_reference $name $tumb $double_entry
-                fi
-            fi
+					if [ ! -z $url ]; then
+						if [ -z "$(grep "$name" "$sourcesprm")" ]; then
+							wget -q "$url" -O "img/$name"
+							downloads=$(( $downloads+1 ))
+							total=$(( total+1 ))
+							progress="$progress:"
+							#echo -ne "\r$total+ $tumb "
+							#for i in $(seq 1 $downloads); do
+							#    echo -n "."
+							#done
+							echo "$name $tumb" >> "$sourcesprm"
+						else
+							progress="${progress}."
+							featured=$(grep $name "$sourcesprm" | cut -d' ' -f2)
+							if [ $verbose ]; then
+									echo -en "\r $name known from "
+									echo -en "$(echo "$featured" | grep -o "$retumb" | head -1 | cut -d'.' -f1) "
+									tms=$(echo "$featured" | grep -o "$retumb" | wc -l)
+									if [ $tms -gt 1 ]; then
+											echo "and others (+$(( tms-1 )))"
+									else
+											echo ""
+									fi
+							fi
+							if [ -z "$(echo $featured | grep $tumb | head -1)" ]; then
+									sed -i "s/$name $retumb/&,$tumb/" "$sourcesprm"
+							fi
+						fi
+						if [ ! -z $double_entry ]; then
+								save_reference $name $tumb $double_entry
+						fi
+					fi
         done
 
 
-        echo -en "\r$total+ $tumb ($downloads)"
-        for i in $(seq 1 $downloads); do
+        echo -en "\r$total+ $tumb ($downloads/${#progress})"
+        for i in $(seq 1 ${#progress}); do
             echo -n " "
         done
         echo ""
@@ -225,7 +228,7 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
             fi
         done
 
-        total=$(( total+downloads ))
+        #total=$(( total+downloads ))
         if [ $(( total )) -ge $(( dlnum )) ]; then
             echo "downloaded $total images"
             exit
