@@ -151,6 +151,10 @@ if [ $verbose ]; then
 fi
 
 
+# regexes
+reimgsrc="http://[0-9]\{2\}\.media\.tumblr\.com\(/[0-9a-f]*\)\?/tumblr_\([0-9a-z_]*\)\.$formats"
+reimg="img src=[\"\']$reimgsrc"
+
 
 # total download count
 total=$(( 0 ))
@@ -170,8 +174,8 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
 
         #TODO: if no links can be extracted, flag this blog to be unreadible somehow
         downloads=$(( 0 ))
-        for img in $(echo $html | grep -io "img src=[\"\']http://[0-9]\{2\}\.media\.tumblr\.com/tumblr_\([0-9a-z_]*\)\.$formats" ); do
-            url=$(echo $img | grep -io "http://[0-9]\{2\}\.media\.tumblr\.com/tumblr_\([0-9a-z_]*\)\.$formats" )
+        for img in $(echo $html | grep -io "$reimg" ); do
+            url=$(echo $img | grep -io "$reimgsrc" )
             name=$(echo $url | grep -io "tumblr_\([0-9a-z_\-]*\)\.$formats" )
 
             if [ ! -z $url ]; then
