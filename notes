@@ -6,6 +6,17 @@ gs -sDEVICE=pdfwrite -dPDFSETTINGS=/screen -dCompatibilityLevel=1.4 -dNOPAUSE -d
 
 # bashrc: set terminal window title to current directory:
 PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
+# limits the path shown to 20 characters max:
+_PS1 ()
+{
+  local PRE= NAME="$1" LENGTH="$2";
+  [[ "$NAME" != "${NAME#$HOME/}" || -z "${NAME#$HOME}" ]] &&
+    PRE+='~' NAME="${NAME#$HOME}" LENGTH=$[LENGTH-1];
+  ((${#NAME}>$LENGTH)) && NAME="/...${NAME:$[${#NAME}-LENGTH+4]}";
+  echo "$PRE$NAME"
+}
+PS1='\u@\h:$(_PS1 "$PWD" 20)\$ '
+
 
 # string operations
 ${stringZ:1} # substring beginning with second character
