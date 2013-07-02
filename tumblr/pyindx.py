@@ -56,7 +56,7 @@ class Tum:
 		# distance of sizes
 		dim=map(lambda (x,y):(x-y)**2, zip(self.size, pict.size))
 		hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
-		return 1.*hist/dim
+		return 1.*hst/dim
 	
 	# finds related images
 	def similar(self, n=10):
