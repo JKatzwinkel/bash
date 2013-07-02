@@ -4,10 +4,11 @@ from PIL import Image as pil
 import os
 from random import choice
 from utils import statistics as stat
+import utils.measures
 
 # scales a given array down to half its size
 def scalehalf(array):
-	return map(lambda (x,y):(x-y)**2, zip(array[::2], array[1::2]))
+	return map(lambda (x,y):x+y, zip(array[::2], array[1::2]))
 
 
 
@@ -35,11 +36,12 @@ class Tum:
 				print filename, 'broken' 
 				#os.remove(filename)
 			# scale down histogram
-			ratio=len(self.histogram)/32
-			hist=[sum(self.histogram[i*ratio:(i+1)*ratio]) for i in range(0,32)]
+			#ratio=len(self.histogram)/32
+			#hist=[sum(self.histogram[i*ratio:(i+1)*ratio]) for i in range(0,32)]
 			#self.histogram=[v/ratio for v in hist]
 			#while len(self.histogram)>32:
-			#self.histogram=scalehalf(self.histogram)
+			for i in [1,2]:
+				hist=scalehalf(self.histogram) # scale histogram down to 64 tones
 			norm=max(hist)/255.
 			self.histogram=[int(v/norm) for v in hist]
 		self.info='{0} {1}'.format(self.size, self.mode)
@@ -65,6 +67,7 @@ class Tum:
 	
 	# calculates similarity measure between two images
 	def similarity(self, pict):
+		return measures.imagesim(self, pict)
 		# distance of sizes
 		#dim=sum(map(lambda (x,y):(x-y)**2, zip(self.size, pict.size)))
 		#dim/=self.size[0]**2+self.size[1]**2
@@ -109,6 +112,9 @@ def picture(path, name):
 	res=Tum.imgs.get(name)
 	if not res:
 		res=Tum(path,name)
+	if not os.path.exists(res.location):
+		del Tum.imgs[name]
+		res=None
 	return res
 
 def getpict(name):
