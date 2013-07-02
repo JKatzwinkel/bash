@@ -22,3 +22,9 @@ within a single line are matched.
 
 > Fun Fact: it is actually possible to store the output of a 
 > `grep --color=always ...` into a variable and `echo` the colored output
+
+
+write-hausarbeit-md
+-----
+
+Generates a latex file from pseudo-markdown formatted text.
