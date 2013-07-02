@@ -4,7 +4,7 @@ import util.statistics as stats
 
 # computes the similarity of two picture's histograms
 # based on Pearson coefficient
-def hist_sim(p, q):
+def image_histograms(p, q):
 	# asume number color tones has been reduced to 64 by Picture class
 	# if those two pictures are not in the same colorspace, thats no prob
 	# while the first one might visit its B, G, and R histograms, the other
@@ -15,7 +15,7 @@ def hist_sim(p, q):
 	correlations=[]
 	for band in colspace:
 		corr=stats.pearson(p.histogram[offset:], q.histogram[offset:])
-		correlation.insert(0, corr)
+		correlations.insert(0, corr)
 		offset-=64
 	# now how do we put them together?
 	res=sum(correlations)/len(correlations)

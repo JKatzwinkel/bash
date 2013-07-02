@@ -3,8 +3,8 @@
 from PIL import Image as pil
 import os
 from random import choice
-from utils import statistics as stat
-import utils.measures
+import util.statistics as stat
+import util.measures as measure
 
 # scales a given array down to half its size
 def scalehalf(array):
@@ -67,7 +67,6 @@ class Tum:
 	
 	# calculates similarity measure between two images
 	def similarity(self, pict):
-		return measures.imagesim(self, pict)
 		# distance of sizes
 		#dim=sum(map(lambda (x,y):(x-y)**2, zip(self.size, pict.size)))
 		#dim/=self.size[0]**2+self.size[1]**2
@@ -76,7 +75,7 @@ class Tum:
 		heights=sorted(dimensions[1])
 		sim=1.*widths[0]/widths[1]*heights[0]/heights[1]
 		#hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
-		hstcor=stat.pearson(self.histogram, pict.histogram)
+		hstcor=measure.image_histograms(self, pict)
 		sim*=hstcor
 		return sim
 	
@@ -94,7 +93,20 @@ class Tum:
 			sim.remove(self)
 		sim.sort(key=lambda x:self.similarity(x), reverse=True)
 		return sim[:n]
-	
+
+	# look how two pictures are related
+	def compare(self, pict):
+		sim=self.similarity(pict)
+		print 'Similarity: {:2.3f}'.format(sim)
+		for p in [self, pict]:
+			print '\tInfo:     \t{}'.format(p.info)
+			print '\tNamespace:\t{}'.format(p.path)
+			print '\tFilename: \t{}'.format(p.name)
+			print '\tHistogram:\t{}'.format(p.hist)
+			print '\tSources:\n\t\t',
+			for source in p.sources:
+				print source.name,
+			print 
 	
 	def __repr__(self):
 		if len(self.sources) > 0:
@@ -200,7 +212,8 @@ def savehtml(filename, images):
 	f.write('<html>\n<body>')
 	for p in images:
 		f.write('\t<img src="{}"/><br/>\n'.format(p.location))
-		f.write('\t{}<br/>\n'.format(p.origin.name))
+		if p.origin:
+			f.write('\t{}<br/>\n'.format(p.origin.name))
 	f.write('</body>\n</html>\n')
 	f.close()
 
