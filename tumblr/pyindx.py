@@ -2,6 +2,7 @@
 
 from PIL import Image as pil
 import os
+from random import choice
 from utils import statistics as stat
 
 # scales a given array down to half its size
@@ -77,7 +78,8 @@ class Tum:
 	# finds related images
 	def similar(self, n=10):
 		sim=[]
-		hosts=[t for t in self.sources]
+		hosts=self.sources[:]
+		sim.extend([choice(Tum.imgs.values()) for i in range(n*2)])
 		while hosts != [] and len(sim)<n*10:
 			host=hosts.pop(0)
 			hosts.extend(host.relates)
@@ -107,15 +109,19 @@ def picture(path, name):
 		res=Tum(path,name)
 	return res
 
+def getpict(name):
+	return Tum.imgs.get(name)
 
+
+###########################################################33
 # Blog
 class Blr:
 	blogs={}
 	def __init__(self, name):
-		self.name=name
+		self.name=name.split('.')[0]
 		self.relates=set()
 		self.features=set()
-		Blr.blogs[name]=self
+		Blr.blogs[self.name]=self
 	
 	# interlinks this blog with another one
 	def link(self, blogname):
@@ -151,7 +157,7 @@ class Blr:
 
 	def __repr__(self):
 		return '<{0}: {1}img, {2}cnx>'.format(
-			self.name.split('.')[0], len(self.features), len(self.relates))
+			self.name, len(self.features), len(self.relates))
 
 
 # return an instance for a blog name
@@ -174,13 +180,50 @@ def largest():
 ################    MODULE FUNCTIONS    ######################
 #############################################################3
 
+# writes the locations of the images in the given list to a file
+def saveset(filename, images):
+	f=open(filename,'w')
+	for p in images:
+		f.write('{0}\n'.format(p.location))
+	f.close()
+
+def savehtml(filename, images):
+	f=open(filename, 'w')
+	f.write('<html>\n<body>')
+	for p in images:
+		f.write('\t<img src="{}"/><br/>\n'.format(p.location))
+		f.write('\t{}\n'.format(p.origin.name))
+	f.close()
+
+# computes similarity matrix for list of images
+# also, prints it!
+def matrix(images):
+	M=[[None]*len(images) for i in images]
+	for i in range(len(images)):
+		for j in range(i,len(images)):
+			sim=int(images[i].similarity(images[j])*100)
+			M[j][i]=sim
+			M[i][j]=sim
+	labels=['{0} {1}'.format(p.origin.name, p.info) for p in images]
+	margin=max([len(label) for label in labels])
+	align='{0}'.format(margin)
+	# print
+	print ' '*(6+margin),' '.join(
+		['{:3}'.format(i) for i in range(len(images))])
+	print ' '*(5+margin),'-'*(len(images)*4)
+	for i in range(len(images)):
+		row='{:2}. {:'+align+'s} : {}'
+		vector=' '.join(['{:3}'.format(sim) for sim in M[i]])
+		print row.format(i, labels[i], vector)
+	
+
 # save image info
 def save(filename='.images'):
 	f=open(filename,'w')
 	for p in Tum.imgs.values():
 		histdump=''.join([hex(v)[2:] for v in p.histogram])
 		width, height = p.size
-		f.write('{0} {4} {1}x{2} {3}\n'.format(
+		f.write('{0} {4} {1}x{2} {3} \n'.format(
 			p.location, width, height, histdump, p.mode))
 	f.close()
 
@@ -189,7 +232,7 @@ def load(filename='.images'):
 	f=open(filename,'r')
 	for line in f:
 		fields=line.split(' ')
-		if len(fields)>4:
+		if len(fields)>5:
 			print 'wrong data layout'
 			f.close()
 			return
@@ -202,7 +245,7 @@ def load(filename='.images'):
 		histogram=[]
 		dump=fields[3]
 		for i in range(0,len(dump),2):
-			histogram.append(int(dump[i:i+2],16))
+			histogram.append(int(dump[i:i+2], 16))
 		Tum(path, name, slots={'size':size, 'histogram':histogram, 'mode':mode})
 	f.close()
 
@@ -231,8 +274,10 @@ def init():
 	
 try:
 	load()
-except:
+except Exception, e:
 	print 'Failed loading image information'
+	print e.args
+	print e.message
 	
 pictures=init()
 pictures.sort(key=lambda x:len(x.sources))
