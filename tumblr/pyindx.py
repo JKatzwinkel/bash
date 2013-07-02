@@ -14,31 +14,34 @@ def scalehalf(array):
 # featured Image
 class Tum:
 	imgs={}
-	def __init__(self, path, name):
+	def __init__(self, path, name, slots={}):
 		self.path=path
 		self.name=name
 		self.sources=[]
 		self.info="<unknown>"
-		self.size=(0,0)
-		self.histogram=[]
-		filename=os.sep.join([self.path, self.name])
-		try:
-			self.pict=pil.open(filename)
-			self.info='{0}'.format(self.pict.size)
-			self.size=self.pict.size
-			self.histogram=self.pict.histogram()
-			del self.pict
-		except:
-			print filename, 'broken' 
-			#os.remove(filename)
-		# scale down histogram
-		ratio=len(self.histogram)/32
-		hist=[sum(self.histogram[i*ratio:(i+1)*ratio]) for i in range(0,32)]
-		#self.histogram=[v/ratio for v in hist]
-		#while len(self.histogram)>32:
+		self.mode=slots.get('mode','None')
+		self.size=slots.get('size',(0,0))
+		self.histogram=slots.get('histogram', [])
+		if len(self.histogram) < 1:
+			filename=os.sep.join([self.path, self.name])
+			try:
+				self.pict=pil.open(filename)
+				self.size=self.pict.size
+				self.mode=self.pict.mode
+				self.histogram=self.pict.histogram()
+				del self.pict
+			except:
+				print filename, 'broken' 
+				#os.remove(filename)
+			# scale down histogram
+			ratio=len(self.histogram)/32
+			hist=[sum(self.histogram[i*ratio:(i+1)*ratio]) for i in range(0,32)]
+			#self.histogram=[v/ratio for v in hist]
+			#while len(self.histogram)>32:
 			#self.histogram=scalehalf(self.histogram)
-		norm=max(hist)/255.
-		self.histogram=[int(v/norm) for v in hist]
+			norm=max(hist)/255.
+			self.histogram=[int(v/norm) for v in hist]
+		self.info='{0} {1}'.format(self.size, self.mode)
 		Tum.imgs[name]=self
 		#print '\r{0}'.format(len(Tum.imgs)),
 
@@ -47,6 +50,11 @@ class Tum:
 		self.pict=pil.open(os.sep.join([self.path, self.name]))
 		self.pict.show()
 		del self.pict
+	
+	
+	@property
+	def location(self):
+		return os.sep.join([self.path, self.name])
 	
 	@property
 	def origin(self):
@@ -91,6 +99,13 @@ class Tum:
 	@property
 	def hist(self):
 		return ''.join([" _.-~'^`"[v/36] for v in self.histogram])
+
+#create or retrieve a picture
+def picture(path, name):
+	res=Tum.imgs.get(name)
+	if not res:
+		res=Tum(path,name)
+	return res
 
 
 # Blog
@@ -159,13 +174,45 @@ def largest():
 ################    MODULE FUNCTIONS    ######################
 #############################################################3
 
+# save image info
+def save(filename='.images'):
+	f=open(filename,'w')
+	for p in Tum.imgs.values():
+		histdump=''.join([hex(v)[2:] for v in p.histogram])
+		width, height = p.size
+		f.write('{0} {4} {1}x{2} {3}\n'.format(
+			p.location, width, height, histdump, p.mode))
+	f.close()
 
+# load from image info record
+def load(filename='.images'):
+	f=open(filename,'r')
+	for line in f:
+		fields=line.split(' ')
+		if len(fields)>4:
+			print 'wrong data layout'
+			f.close()
+			return
+		locs=fields[0].split(os.sep)
+		path=os.sep.join(locs[:-1])
+		name=locs[-1]
+		mode=fields[1]
+		dim=fields[2].split('x')
+		size=(int(dim[0]), int(dim[1]))
+		histogram=[]
+		dump=fields[3]
+		for i in range(0,len(dump),2):
+			histogram.append(int(dump[i:i+2],16))
+		Tum(path, name, slots={'size':size, 'histogram':histogram, 'mode':mode})
+	f.close()
+
+# initialize from file system and sources files
 def init():
 	# instantiate img objects for all images on disk
 	for path, dirs, files in os.walk('.'):
 		if path.endswith('/img'):
 			for img in files:
-				Tum(path, img)
+				picture(path, img)
 	# for the entire source record
 	for entry in open('sources'):
 		img, blogs = entry.split(' ')
@@ -181,6 +228,11 @@ def init():
 			t.relates.remove(t)
 	pictures=Tum.imgs.values()
 	return pictures
+	
+try:
+	load()
+except:
+	print 'Failed loading image information'
 	
 pictures=init()
 pictures.sort(key=lambda x:len(x.sources))
