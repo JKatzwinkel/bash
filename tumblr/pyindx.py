@@ -59,7 +59,9 @@ class Tum:
 	
 	@property
 	def origin(self):
-		return self.sources[0]
+		if len(self.sources)>0:
+			return self.sources[0]
+		return None
 	
 	# calculates similarity measure between two images
 	def similarity(self, pict):
@@ -192,7 +194,8 @@ def savehtml(filename, images):
 	f.write('<html>\n<body>')
 	for p in images:
 		f.write('\t<img src="{}"/><br/>\n'.format(p.location))
-		f.write('\t{}\n'.format(p.origin.name))
+		f.write('\t{}<br/>\n'.format(p.origin.name))
+	f.write('</body>\n</html>\n')
 	f.close()
 
 # computes similarity matrix for list of images
@@ -215,6 +218,60 @@ def matrix(images):
 		row='{:2}. {:'+align+'s} : {}'
 		vector=' '.join(['{:3}'.format(sim) for sim in M[i]])
 		print row.format(i, labels[i], vector)
+
+
+# looks for images with 100% similarity
+def searchdoubles():
+	res=[]
+	imgs=Tum.imgs.values()
+	for i in range(len(imgs)):
+		for j in range(i+1,len(imgs)):
+			p=imgs[i]
+			q=imgs[j]
+			sim=p.similarity(q)
+			if sim>.85:
+				#print 'High similarity between {} and {}.'.format(p,q)
+				res.append((p,q,sim))
+				if p.origin:
+					p.origin.link(q)
+	f=open('.aliases.html','w')
+	f.write('<html>\n<body>')
+	for p,q,sim in res:
+		f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
+		f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
+		if len(p.sources)>0 and len(q.sources)>0:
+			f.write('<i>{} and {}: </i><br/>\n'.format(p.origin.name,q.origin.name,))
+		f.write('<img src="{}"/><img src="{}"/><br/>\n'.format(
+			p.location, q.location))
+	f.write('</body>\n</html>\n')
+	f.close()
+	print len(res), 'potential aliases'
+	return res
+
+
+def simpairs():
+	res=[]
+	imgs=Tum.imgs.values()
+	for i in range(len(imgs)):
+		for j in range(i+1,len(imgs)):
+			p=imgs[i]
+			q=imgs[j]
+			sim=p.similarity(q)
+			if sim>.80 and sim<.97:
+				res.append((p,q,sim))
+	f=open('.twins.html','w')
+	f.write('<html>\n<body>')
+	for p,q,sim in res:
+		f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
+		f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
+		if len(p.sources)>0 and len(q.sources)>0:
+			f.write('<i>{} and {}: </i><br/>\n'.format(p.origin.name,q.origin.name,))
+		f.write('<img src="{}"/><img src="{}"/><br/>\n'.format(
+			p.location, q.location))
+	f.write('</body>\n</html>\n')
+	f.close()
+	return res
+	
 	
 
 # save image info
