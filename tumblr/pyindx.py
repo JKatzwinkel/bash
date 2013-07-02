@@ -2,6 +2,7 @@
 
 from PIL import Image as pil
 import os
+from utils import statistics as stat
 
 # scales a given array down to half its size
 def scalehalf(array):
@@ -54,24 +55,30 @@ class Tum:
 	# calculates similarity measure between two images
 	def similarity(self, pict):
 		# distance of sizes
-		dim=sum(map(lambda (x,y):(x-y)**2, zip(self.size, pict.size)))
-		dim/=self.size[0]**2+self.size[1]**2
-		hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
-		return 1.*hst*dim
+		#dim=sum(map(lambda (x,y):(x-y)**2, zip(self.size, pict.size)))
+		#dim/=self.size[0]**2+self.size[1]**2
+		dimensions=zip(self.size, pict.size)
+		widths=sorted(dimensions[0])
+		heights=sorted(dimensions[1])
+		sim=1.*widths[0]/widths[1]*heights[0]/heights[1]
+		#hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
+		hstcor=stat.pearson(self.histogram, pict.histogram)
+		sim*=hstcor
+		return sim
 	
 	# finds related images
 	def similar(self, n=10):
 		sim=[]
 		hosts=[t for t in self.sources]
-		while hosts != [] and len(sim)<n*5:
+		while hosts != [] and len(sim)<n*10:
 			host=hosts.pop(0)
 			hosts.extend(host.relates)
 			sim.extend(host.popular)
 		sim=list(set(sim))
 		if self in sim:
 			sim.remove(self)
-		sim.sort(key=lambda x:self.similarity(x))
-		return set(sim[:n])
+		sim.sort(key=lambda x:self.similarity(x), reverse=True)
+		return sim[:n]
 	
 	
 	def __repr__(self):
