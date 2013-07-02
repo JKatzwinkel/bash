@@ -54,18 +54,21 @@ class Tum:
 	# calculates similarity measure between two images
 	def similarity(self, pict):
 		# distance of sizes
-		dim=map(lambda (x,y):(x-y)**2, zip(self.size, pict.size))
+		dim=sum(map(lambda (x,y):(x-y)**2, zip(self.size, pict.size)))
+		dim/=self.size[0]**2+self.size[1]**2
 		hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
-		return 1.*hst/dim
+		return 1.*hst*dim
 	
 	# finds related images
 	def similar(self, n=10):
 		sim=[]
 		hosts=[t for t in self.sources]
-		while hosts != [] and len(sim)<n:
+		while hosts != [] and len(sim)<n*5:
 			host=hosts.pop(0)
 			hosts.extend(host.relates)
 			sim.extend(host.popular)
+		sim=list(set(sim))
+		if self in sim:
 			sim.remove(self)
 		sim.sort(key=lambda x:self.similarity(x))
 		return set(sim[:n])
