@@ -56,7 +56,7 @@ def image_histrelcol(p):
 				[scale*v-grey[i] for (i,v) in enumerate(hist[bank*32:(bank+1)*32])])
 	else:
 		for bank in range(3):
-			res.extend([hist[i]/(i-16.) for i in range(32)])
+			res.extend([hist[i]/(i-16.5) for i in range(32)])
 	return res
 
 
@@ -67,4 +67,4 @@ def image_histrelcor(p,q):
 	for bank in range(0,96,32):
 		cor=stats.pearson(rel[0][bank:bank+32], rel[1][bank:bank+32])
 		corrs.append(cor)
-	return cor
+	return corrs

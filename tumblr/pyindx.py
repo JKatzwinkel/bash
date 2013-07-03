@@ -89,7 +89,7 @@ class Tum:
 		mood=measure.image_histmediandist(self, pict)
 		msr.append(1-mood)
 		colorful=measure.image_histrelcor(self, pict)
-		msr.append(colorful)
+		msr.extend(colorful)
 		return sum(msr)/len(msr)
 	
 	# finds related images
