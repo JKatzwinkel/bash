@@ -24,6 +24,7 @@ class Tum:
 		self.mode=slots.get('mode','None')
 		self.size=slots.get('size',(0,0))
 		self.histogram=slots.get('histogram', [])
+		self.histoscale=slots.get('histoscale', 1)
 		if len(self.histogram) < 1:
 			filename=os.sep.join([self.path, self.name])
 			try:
@@ -32,18 +33,24 @@ class Tum:
 				self.mode=self.pict.mode
 				self.histogram=self.pict.histogram()
 				del self.pict
+				#os.remove(filename)
+				# scale down histogram
+				#ratio=len(self.histogram)/96
+				#hist=[sum(self.histogram[i*ratio:(i+1)*ratio]) for i in range(0,32)]
+				#self.histogram=[v/ratio for v in hist]
+				#while len(self.histogram)>32:
+				hist=self.histogram[:]
+				for i in [1,2,3]:
+					if len(hist)>96 or self.mode != 'RGB':
+						hist=scalehalf(hist) # scale histogram down to 32re tones
+				norm=max(hist)/255.
+				if norm>1:
+					self.histogram=[int(v/norm) for v in hist]
+					self.histoscale=int(norm)
+				else:
+					self.histogram=hist[:]
 			except:
 				print filename, 'broken' 
-				#os.remove(filename)
-			# scale down histogram
-			#ratio=len(self.histogram)/32
-			#hist=[sum(self.histogram[i*ratio:(i+1)*ratio]) for i in range(0,32)]
-			#self.histogram=[v/ratio for v in hist]
-			#while len(self.histogram)>32:
-			for i in [1,2]:
-				hist=scalehalf(self.histogram) # scale histogram down to 64 tones
-			norm=max(hist)/255.
-			self.histogram=[int(v/norm) for v in hist]
 		self.info='{0} {1}'.format(self.size, self.mode)
 		Tum.imgs[name]=self
 		#print '\r{0}'.format(len(Tum.imgs)),
@@ -66,18 +73,24 @@ class Tum:
 		return None
 	
 	# calculates similarity measure between two images
+	# -1: negative correlation, 1: perfect correlation/identity
 	def similarity(self, pict):
 		# distance of sizes
 		#dim=sum(map(lambda (x,y):(x-y)**2, zip(self.size, pict.size)))
 		#dim/=self.size[0]**2+self.size[1]**2
+		msr=[]
 		dimensions=zip(self.size, pict.size)
 		widths=sorted(dimensions[0])
 		heights=sorted(dimensions[1])
-		sim=1.*widths[0]/widths[1]*heights[0]/heights[1]
+		msr.append(1.*widths[0]/widths[1]*heights[0]/heights[1])
 		#hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
 		hstcor=measure.image_histograms(self, pict)
-		sim*=hstcor
-		return sim
+		msr.extend(hstcor)
+		mood=measure.image_histmediandist(self, pict)
+		msr.append(1-mood)
+		colorful=measure.image_histrelcor(self, pict)
+		msr.append(colorful)
+		return sum(msr)/len(msr)
 	
 	# finds related images
 	def similar(self, n=10):
@@ -98,6 +111,8 @@ class Tum:
 	def compare(self, pict):
 		sim=self.similarity(pict)
 		print 'Similarity: {:2.3f}'.format(sim)
+		print 'Color mood dist: {:2.3f}'.format(
+			measure.image_histmediandist(self, pict))
 		for p in [self, pict]:
 			print '\tInfo:     \t{}'.format(p.info)
 			print '\tNamespace:\t{}'.format(p.path)
@@ -117,7 +132,13 @@ class Tum:
 	#simple histogram representation
 	@property
 	def hist(self):
-		return ''.join([" _.-~'^`"[v/36] for v in self.histogram])
+		res=[]
+		for thresh in [200,150,100,50,25,0]:
+			row=[[' ','.',':'][int(v>thresh)+int(v>thresh+15)] for v in
+				self.histogram]
+			res.append(''.join(row))
+		return "\n".join(res)
+		#return ''.join([" _.-~'^`"[v/36] for v in self.histogram])
 
 #create or retrieve a picture
 def picture(path, name):
@@ -210,7 +231,7 @@ def saveset(filename, images):
 def savehtml(filename, images):
 	f=open(filename, 'w')
 	f.write('<html>\n<body>')
-	for p in images:
+	for p in images[:300]:
 		f.write('\t<img src="{}"/><br/>\n'.format(p.location))
 		if p.origin:
 			f.write('\t{}<br/>\n'.format(p.origin.name))
@@ -226,7 +247,8 @@ def matrix(images):
 			sim=int(images[i].similarity(images[j])*100)
 			M[j][i]=sim
 			M[i][j]=sim
-	labels=['{0} {1}'.format(p.origin.name, p.info) for p in images]
+	labels=['{0} {1}'.format(
+		['',p.origin.name][int(p.origin!=None)], p.info) for p in images]
 	margin=max([len(label) for label in labels])
 	align='{0}'.format(margin)
 	# print
@@ -276,11 +298,11 @@ def simpairs():
 			p=imgs[i]
 			q=imgs[j]
 			sim=p.similarity(q)
-			if sim>.80 and sim<.97:
+			if sim>.87 and sim<.98:
 				res.append((p,q,sim))
 	f=open('.twins.html','w')
 	f.write('<html>\n<body>')
-	for p,q,sim in res:
+	for p,q,sim in res[:500]:
 		f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
 		f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
 		if len(p.sources)>0 and len(q.sources)>0:
@@ -299,8 +321,8 @@ def save(filename='.images'):
 	for p in Tum.imgs.values():
 		histdump=''.join([hex(v)[2:] for v in p.histogram])
 		width, height = p.size
-		f.write('{0} {4} {1}x{2} {3} \n'.format(
-			p.location, width, height, histdump, p.mode))
+		f.write('{0} {4} {1}x{2} {3} {5} \n'.format(
+			p.location, width, height, histdump, p.mode, p.histoscale))
 	f.close()
 
 # load from image info record
@@ -308,7 +330,7 @@ def load(filename='.images'):
 	f=open(filename,'r')
 	for line in f:
 		fields=line.split(' ')
-		if len(fields)>5:
+		if len(fields)>10:
 			print 'wrong data layout'
 			f.close()
 			return
@@ -322,7 +344,10 @@ def load(filename='.images'):
 		dump=fields[3]
 		for i in range(0,len(dump),2):
 			histogram.append(int(dump[i:i+2], 16))
-		Tum(path, name, slots={'size':size, 'histogram':histogram, 'mode':mode})
+		histoscale=int(fields[4])
+		Tum(path, name, slots={
+			'size':size, 'histogram':histogram, 'mode':mode,
+			'histoscale':histoscale})
 	f.close()
 
 # initialize from file system and sources files
