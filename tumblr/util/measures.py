@@ -46,17 +46,19 @@ def image_histmediandist(p,q):
 # wie bunt?
 def image_histrelcol(p):
 	hist=p.histogram
-	print len(hist), p.name
+	#print len(hist), p.name
 	scale=p.histoscale
 	res=[]
 	if len(hist)>32:
-		grey=[sum([hist[i],hist[i+32],hist[i+64]])*scale/3 for i in range(32)]
+		grey=[sum(
+			[hist[i],hist[(i+32)%len(hist)],
+			hist[(i+64)%len(hist)]])*scale/3 for i in range(32)]
 		for bank in range(3):
 			res.extend(
 				[scale*v-grey[i] for (i,v) in enumerate(hist[bank*32:(bank+1)*32])])
 	else:
 		for bank in range(3):
-			res.extend([hist[i]/(i-16.5) for i in range(32)])
+			res.extend([hist[i]/(i-17.5) for i in range(32)])
 	return res
 
 

@@ -3,6 +3,7 @@
 from PIL import Image as pil
 import os
 from random import choice
+from math import sqrt as sqr
 import util.statistics as stat
 import util.measures as measure
 
@@ -49,9 +50,13 @@ class Tum:
 					self.histoscale=int(norm)
 				else:
 					self.histogram=hist[:]
+				if self.mode=='RGBA':
+					self.histogram=self.histogram[:96]
+					self.mode='RGB'
 			except:
 				print filename, 'broken' 
 		self.info='{0} {1}'.format(self.size, self.mode)
+		self.relates={}
 		Tum.imgs[name]=self
 		#print '\r{0}'.format(len(Tum.imgs)),
 
@@ -82,7 +87,7 @@ class Tum:
 		dimensions=zip(self.size, pict.size)
 		widths=sorted(dimensions[0])
 		heights=sorted(dimensions[1])
-		msr.append(1.*widths[0]/widths[1]*heights[0]/heights[1])
+		msr.append(sqr(1.*widths[0]/widths[1]*heights[0]/heights[1]))
 		#hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
 		hstcor=measure.image_histograms(self, pict)
 		msr.extend(hstcor)
@@ -104,12 +109,18 @@ class Tum:
 		sim=list(set(sim))
 		if self in sim:
 			sim.remove(self)
-		sim.sort(key=lambda x:self.similarity(x), reverse=True)
-		return sim[:n]
+		ann=[(p,self.similarity(p)) for p in sim]
+		for p,sm in ann:
+			if sm>.85:
+				connect(self,p,sm)
+		ann.sort(key=lambda x:x[1], reverse=True)
+		return ann[:n]
 
 	# look how two pictures are related
 	def compare(self, pict):
 		sim=self.similarity(pict)
+		if sim>.85:
+			connect(self,pict,sim)
 		print 'Similarity: {:2.3f}'.format(sim)
 		print 'Color mood dist: {:2.3f}'.format(
 			measure.image_histmediandist(self, pict))
@@ -261,6 +272,12 @@ def matrix(images):
 		print row.format(i, labels[i], vector)
 
 
+# establishes a link between two pictures
+def connect(p,q,sim):
+	p.relates[q.name]=sim
+	q.relates[p.name]=sim
+
+
 # looks for images with 100% similarity
 def searchdoubles():
 	res=[]
@@ -270,13 +287,16 @@ def searchdoubles():
 			p=imgs[i]
 			q=imgs[j]
 			sim=p.similarity(q)
-			if sim>.85:
-				#print 'High similarity between {} and {}.'.format(p,q)
-				res.append((p,q,sim))
-				if p.origin:
-					p.origin.link(q)
+			if sim>.86:
+				connect(p,q,sim)
+				if sim>.92:
+					#print 'High similarity between {} and {}.'.format(p,q)
+					res.append((p,q,sim))
+					if p.origin:
+						p.origin.link(q)
 	f=open('.aliases.html','w')
 	f.write('<html>\n<body>')
+	res.sort(key=lambda t:t[2], reverse=True)
 	for p,q,sim in res:
 		f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
 		f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
@@ -300,8 +320,10 @@ def simpairs():
 			sim=p.similarity(q)
 			if sim>.87 and sim<.98:
 				res.append((p,q,sim))
+				connect(p,q,sim)
 	f=open('.twins.html','w')
 	f.write('<html>\n<body>')
+	res.sort(key=lambda t:t[2], reverse=True)
 	for p,q,sim in res[:500]:
 		f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
 		f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
@@ -384,8 +406,7 @@ pictures=init()
 pictures.sort(key=lambda x:len(x.sources))
 pictures.reverse()
 
-tumblrs=Blr.blogs.values()
-tumblrs.sort(key=lambda x:len(x.features))
-tumblrs.reverse()
+tumblrs=Blr.blogs.values()[:]
+tumblrs.sort(key=lambda x:len(x.feat), reverse=True)
 
 
