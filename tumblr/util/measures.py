@@ -30,7 +30,8 @@ def image_histmediane(p):
 	for offset,channel in enumerate('RGB'):
 		off=offset*32%len(p.histogram)
 		band=p.histogram[off:off+32]
-		median=sum([i*v for (i,v) in enumerate(band)])/sum(band)
+		#median=sum([i*v for (i,v) in enumerate(band)])/sum(band)
+		median=stats.median_histogram(band)
 		mediane.append(median)
 	return mediane
 

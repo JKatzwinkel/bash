@@ -17,3 +17,11 @@ def pearson(X, Y):
 	else:
 		return 0
 	
+
+def median_histogram(H):
+	total=0
+	half=sum(H)/2
+	for bin, occ in enumerate(H):
+		total+=occ
+		if total>=half:
+			return bin
