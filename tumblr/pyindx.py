@@ -164,6 +164,15 @@ def picture(path, name):
 def getpict(name):
 	return Tum.imgs.get(name)
 
+# establishes a link between two pictures
+def connect(p,q,sim):
+	p.relates[q]=sim
+	q.relates[p]=sim
+
+
+
+
+
 
 ###########################################################33
 # Blog
@@ -242,10 +251,27 @@ def saveset(filename, images):
 def savehtml(filename, images):
 	f=open(filename, 'w')
 	f.write('<html>\n<body>')
+	f.write('<div width="1000">\n')
 	for p in images[:300]:
-		f.write('\t<img src="{}"/><br/>\n'.format(p.location))
+		f.write('\t<img src="{}"/>\n'.format(p.location))
 		if p.origin:
 			f.write('\t{}<br/>\n'.format(p.origin.name))
+	f.write('</div>\n')
+	f.write('</body>\n</html>\n')
+	f.close()
+
+save savesimilarhtml(filename, images):
+	f=open(filename, 'w')
+	f.write('<html>\n<body>')
+	images=Tum.imgs[:].sorted(key=lambda p:len(p.relates), reverse=True)
+	for p in images[:300]:
+		f.write('<div>\n')
+		f.write('\t<h3>{}</h3>\n'.format(p.name)
+		if p.origin:
+			f.write('\t{}<br/>\n'.format(p.origin.name))
+		for s in p.relates.values():
+			f.write('\t\t<img src="{}"/>\n'.format(s.location))
+		f.write('</div>\n')
 	f.write('</body>\n</html>\n')
 	f.close()
 
@@ -272,10 +298,6 @@ def matrix(images):
 		print row.format(i, labels[i], vector)
 
 
-# establishes a link between two pictures
-def connect(p,q,sim):
-	p.relates[q.name]=sim
-	q.relates[p.name]=sim
 
 
 # looks for images with 100% similarity
