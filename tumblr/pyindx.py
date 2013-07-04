@@ -251,24 +251,26 @@ def savehtml(images, filename):
 	for p in images:
 		f.write(' <div>\n')
 		f.write('  <h3>{}</h3/>\n'.format(p.name))
+		if p.origin:
+			f.write('  {}\n'.format(p.origin.name))
 		f.write('  <table height="{}">\n'.format(p.size[1]))
 		f.write('   <tr><td rowspan="2">\n')
 		f.write('    <img src="{}"/><br/>\n'.format(p.location))
-		if p.origin:
-			f.write('   <br/>{}>\n'.format(p.origin.name))
 		f.write('   </td>\n')
 
 		thmbsize=min(p.size[1]/2, 300)
-		for i,s in enumerate(p.relates.keys()):
-			f.write('     <td>\n')
+		rowheight=thmbsize+10
+		for i,s in enumerate(sorted(p.relates.keys(), key=lambda x:x.size[0]/x.size[1])):
+			f.write('     <td height="{}" valign="top">\n'.format(rowheight))
 			f.write('      <img src="{}" height="{}"><br/>\n'.format(s.location, thmbsize))
 			if (s.origin):
 				f.write('      {}\n'.format(s.origin.name))
 			f.write('     </td>\n')
-			if i==len(p.relates)/2:
+			if i+1==len(p.relates)/2:
 				f.write('    </tr><tr>\n')
+				rowheight=p.size[1]-rowheight
 		f.write('   </tr>\n  </table>\n')
-		f.write(' </div>/n')
+		f.write(' </div>\n')
 	f.write('</body>\n</html>\n')
 	f.close()
 
@@ -301,18 +303,22 @@ def matrix(images):
 def searchdoubles():
 	res=[]
 	imgs=Tum.imgs.values()
-	for i in range(len(imgs)):
-		for j in range(i+1,len(imgs)):
-			p=imgs[i]
-			q=imgs[j]
-			sim=p.similarity(q)
-			if sim>.86:
-				connect(p,q,sim)
-				if sim>.92:
+	#for i in range(len(imgs)):
+		#for j in range(i+1,len(imgs)):
+			#p=imgs[i]
+			#q=imgs[j]
+			#sim=p.similarity(q)
+			#if sim>.86:
+				#connect(p,q,sim)
+				#if sim>.92:
 					#print 'High similarity between {} and {}.'.format(p,q)
-					res.append((p,q,sim))
-					if p.origin:
-						p.origin.link(q)
+					#res.append((p,q,sim))
+					#if p.origin:
+						#p.origin.link(q)
+	for p in imgs:
+		for q,sim in p.relates.items():
+			if sim>.92:
+				res.append((p,q,sim))
 	f=open('.aliases.html','w')
 	f.write('<html>\n<body>')
 	res.sort(key=lambda t:t[2], reverse=True)
