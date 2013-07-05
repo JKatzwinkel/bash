@@ -245,6 +245,8 @@ def saveset(images, filename):
 		f.write('{0}\n'.format(p.location))
 	f.close()
 
+
+# craft html page for a set of images
 def savehtml(images, filename):
 	f=open(filename, 'w')
 	f.write('<html>\n<body>')
@@ -257,7 +259,6 @@ def savehtml(images, filename):
 		f.write('   <tr><td rowspan="2">\n')
 		f.write('    <img src="{}"/><br/>\n'.format(p.location))
 		f.write('   </td>\n')
-
 		thmbsize=min(p.size[1]/2, 300)
 		rowheight=thmbsize+10
 		for i,s in enumerate(sorted(p.relates.keys(), key=lambda x:x.size[0]/x.size[1])):
@@ -317,7 +318,7 @@ def searchdoubles():
 						#p.origin.link(q)
 	for p in imgs:
 		for q,sim in p.relates.items():
-			if sim>.92:
+			if sim>.95:
 				res.append((p,q,sim))
 	f=open('.aliases.html','w')
 	f.write('<html>\n<body>')
@@ -335,7 +336,9 @@ def searchdoubles():
 	return res
 
 
+# search for images similar to each other, link them
 def simpairs():
+	print 'Begin computing image similarities'
 	res=[]
 	imgs=Tum.imgs.values()
 	for i in range(len(imgs)):
@@ -343,19 +346,23 @@ def simpairs():
 			p=imgs[i]
 			q=imgs[j]
 			sim=p.similarity(q)
-			if sim>.87 and sim<.98:
+			if sim>.8:
 				res.append((p,q,sim))
 				connect(p,q,sim)
+		if i%100==0:
+			print '\ti\t/\tlen(imgs)',
+	print '\tDone!\t\t\t'
 	f=open('.twins.html','w')
 	f.write('<html>\n<body>')
 	res.sort(key=lambda t:t[2], reverse=True)
 	for p,q,sim in res[:500]:
-		f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
-		f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
-		if len(p.sources)>0 and len(q.sources)>0:
-			f.write('<i>{} and {}: </i><br/>\n'.format(p.origin.name,q.origin.name,))
-		f.write('<img src="{}"/><img src="{}"/><br/>\n'.format(
-			p.location, q.location))
+		if sim > .9:
+			f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
+			f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
+			if len(p.sources)>0 and len(q.sources)>0:
+				f.write('<i>{} and {}: </i><br/>\n'.format(p.origin.name,q.origin.name,))
+			f.write('<img src="{}"/><img src="{}"/><br/>\n'.format(
+				p.location, q.location))
 	f.write('</body>\n</html>\n')
 	f.close()
 	return res
