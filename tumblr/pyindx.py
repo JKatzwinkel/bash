@@ -275,6 +275,34 @@ def savehtml(images, filename):
 	f.write('</body>\n</html>\n')
 	f.close()
 
+# craft html page for groups of images
+def savegroups(groups, filename):
+	f=open(filename, 'w')
+	f.write('<html>\n<body>')
+	for group in groups:
+		f.write(' <div>\n')
+		f.write('  <h3>{} Members</h3/>\n'.format(len(group)))
+		p=group.pop(0)
+		f.write('  <table height="{}">\n'.format(p.size[1]))
+		f.write('   <tr><td rowspan="2">\n')
+		f.write('    <img src="{}"/><br/>\n'.format(p.location))
+		f.write('   </td>\n')
+		thmbsize=min(p.size[1]/2, 300)
+		rowheight=thmbsize+10
+		for i,s in enumerate(group):
+			f.write('     <td height="{}" valign="top">\n'.format(rowheight))
+			f.write('      <img src="{}" height="{}"><br/>\n'.format(s.location, thmbsize))
+			if (s.origin):
+				f.write('      {}\n'.format(s.origin.name))
+			f.write('     </td>\n')
+			if i+1==len(group)/2:
+				f.write('    </tr><tr>\n')
+				rowheight=p.size[1]-rowheight
+		f.write('   </tr>\n  </table>\n')
+		f.write(' </div>\n')
+	f.write('</body>\n</html>\n')
+	f.close()
+
 
 # computes similarity matrix for list of images
 # also, prints it!
@@ -346,11 +374,11 @@ def simpairs():
 			p=imgs[i]
 			q=imgs[j]
 			sim=p.similarity(q)
-			if sim>.8:
+			if sim>.5:
 				res.append((p,q,sim))
 				connect(p,q,sim)
 		if i%100==0:
-			print '\ti\t/\tlen(imgs)',
+			print '\t{}\t/\t{}'.format(i, len(imgs)),
 	print '\tDone!\t\t\t'
 	f=open('.twins.html','w')
 	f.write('<html>\n<body>')
@@ -368,6 +396,24 @@ def simpairs():
 	return res
 	
 	
+# search for cliques of images all linking each other
+def cliques():
+	cliques=[]
+	imgs=filter(lambda p:len(p.relates)>2, Tum.imgs.values()[:])
+	imgs.sort(key=lambda p:len(p.relates), reverse=True)
+	for p in imgs:
+		clique=[p]
+		for s in p.relates.keys():
+			for cand in clique:
+				if not s.relates.has_key(cand):
+					break # clique candidate is not linked by test node
+			else:
+				clique.add(s) # all clique candidates are as well liked by node
+				#TODO: 
+		if len(clique)>2:
+			cliques.append(clique)
+
+
 
 # save image info
 def save(filename='.images'):

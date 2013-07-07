@@ -8,6 +8,8 @@ index.simpairs()
 most_sim=sorted(index.Tum.imgs.values()[:], key=lambda p:len(p.relates))[::-1]
 most_sim=filter(lambda p:len(p.relates)>1, most_sim)
 index.savehtml(most_sim, '.groups.html')
+cliques=index.cliques()
+index.savegroups(cliques, '.cliques.html')
 
 # dubletten
 index.searchdoubles()
