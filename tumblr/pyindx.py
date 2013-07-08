@@ -171,9 +171,6 @@ def connect(p,q,sim):
 
 
 
-
-
-
 ###########################################################33
 # Blog
 class Blr:
@@ -242,38 +239,70 @@ def largest():
 #############################################################3
 
 # writes the locations of the images in the given list to a file
-def saveset(filename, images):
+def saveset(images, filename):
 	f=open(filename,'w')
 	for p in images:
 		f.write('{0}\n'.format(p.location))
 	f.close()
 
-def savehtml(filename, images):
+
+# craft html page for a set of images
+def savehtml(images, filename):
 	f=open(filename, 'w')
 	f.write('<html>\n<body>')
-	f.write('<div width="1000">\n')
-	for p in images[:300]:
-		f.write('\t<img src="{}"/>\n'.format(p.location))
+	for p in images:
+		f.write(' <div>\n')
+		f.write('  <h3>{}</h3/>\n'.format(p.name))
 		if p.origin:
-			f.write('\t{}<br/>\n'.format(p.origin.name))
-	f.write('</div>\n')
+			f.write('  {}\n'.format(p.origin.name))
+		f.write('  <table height="{}">\n'.format(p.size[1]))
+		f.write('   <tr><td rowspan="2">\n')
+		f.write('    <img src="{}"/><br/>\n'.format(p.location))
+		f.write('   </td>\n')
+		thmbsize=min(p.size[1]/2, 300)
+		rowheight=thmbsize+10
+		for i,s in enumerate(sorted(p.relates.keys(), key=lambda x:x.size[0]/x.size[1])):
+			f.write('     <td height="{}" valign="top">\n'.format(rowheight))
+			f.write('      <img src="{}" height="{}"><br/>\n'.format(s.location, thmbsize))
+			if (s.origin):
+				f.write('      {}\n'.format(s.origin.name))
+			f.write('     </td>\n')
+			if i+1==len(p.relates)/2:
+				f.write('    </tr><tr>\n')
+				rowheight=p.size[1]-rowheight
+		f.write('   </tr>\n  </table>\n')
+		f.write(' </div>\n')
 	f.write('</body>\n</html>\n')
 	f.close()
 
-save savesimilarhtml(filename, images):
+# craft html page for groups of images
+def savegroups(groups, filename):
 	f=open(filename, 'w')
 	f.write('<html>\n<body>')
-	images=Tum.imgs[:].sorted(key=lambda p:len(p.relates), reverse=True)
-	for p in images[:300]:
-		f.write('<div>\n')
-		f.write('\t<h3>{}</h3>\n'.format(p.name)
-		if p.origin:
-			f.write('\t{}<br/>\n'.format(p.origin.name))
-		for s in p.relates.values():
-			f.write('\t\t<img src="{}"/>\n'.format(s.location))
-		f.write('</div>\n')
+	for group in groups:
+		f.write(' <div>\n')
+		f.write('  <h3>{} Members</h3/>\n'.format(len(group)))
+		p=group.pop(0)
+		f.write('  <table height="{}">\n'.format(p.size[1]))
+		f.write('   <tr><td rowspan="2">\n')
+		f.write('    <img src="{}"/><br/>\n'.format(p.location))
+		f.write('   </td>\n')
+		thmbsize=min(p.size[1]/2, 300)
+		rowheight=thmbsize+10
+		for i,s in enumerate(group):
+			f.write('     <td height="{}" valign="top">\n'.format(rowheight))
+			f.write('      <img src="{}" height="{}"><br/>\n'.format(s.location, thmbsize))
+			if (s.origin):
+				f.write('      {}\n'.format(s.origin.name))
+			f.write('     </td>\n')
+			if i+1==len(group)/2:
+				f.write('    </tr><tr>\n')
+				rowheight=p.size[1]-rowheight
+		f.write('   </tr>\n  </table>\n')
+		f.write(' </div>\n')
 	f.write('</body>\n</html>\n')
 	f.close()
+
 
 # computes similarity matrix for list of images
 # also, prints it!
@@ -299,23 +328,26 @@ def matrix(images):
 
 
 
-
 # looks for images with 100% similarity
 def searchdoubles():
 	res=[]
 	imgs=Tum.imgs.values()
-	for i in range(len(imgs)):
-		for j in range(i+1,len(imgs)):
-			p=imgs[i]
-			q=imgs[j]
-			sim=p.similarity(q)
-			if sim>.86:
-				connect(p,q,sim)
-				if sim>.92:
+	#for i in range(len(imgs)):
+		#for j in range(i+1,len(imgs)):
+			#p=imgs[i]
+			#q=imgs[j]
+			#sim=p.similarity(q)
+			#if sim>.86:
+				#connect(p,q,sim)
+				#if sim>.92:
 					#print 'High similarity between {} and {}.'.format(p,q)
-					res.append((p,q,sim))
-					if p.origin:
-						p.origin.link(q)
+					#res.append((p,q,sim))
+					#if p.origin:
+						#p.origin.link(q)
+	for p in imgs:
+		for q,sim in p.relates.items():
+			if sim>.95:
+				res.append((p,q,sim))
 	f=open('.aliases.html','w')
 	f.write('<html>\n<body>')
 	res.sort(key=lambda t:t[2], reverse=True)
@@ -332,7 +364,9 @@ def searchdoubles():
 	return res
 
 
+# search for images similar to each other, link them
 def simpairs():
+	print 'Begin computing image similarities'
 	res=[]
 	imgs=Tum.imgs.values()
 	for i in range(len(imgs)):
@@ -340,24 +374,46 @@ def simpairs():
 			p=imgs[i]
 			q=imgs[j]
 			sim=p.similarity(q)
-			if sim>.87 and sim<.98:
+			if sim>.5:
 				res.append((p,q,sim))
 				connect(p,q,sim)
+		if i%100==0:
+			print '\t{}\t/\t{}'.format(i, len(imgs)),
+	print '\tDone!\t\t\t'
 	f=open('.twins.html','w')
 	f.write('<html>\n<body>')
 	res.sort(key=lambda t:t[2], reverse=True)
 	for p,q,sim in res[:500]:
-		f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
-		f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
-		if len(p.sources)>0 and len(q.sources)>0:
-			f.write('<i>{} and {}: </i><br/>\n'.format(p.origin.name,q.origin.name,))
-		f.write('<img src="{}"/><img src="{}"/><br/>\n'.format(
-			p.location, q.location))
+		if sim > .9:
+			f.write('<h4>{} and {}: {}</h4>\n'.format(p.name,q.name,sim))
+			f.write('<b>{} versus {}: </b><br/>\n'.format(p.info,q.info,))
+			if len(p.sources)>0 and len(q.sources)>0:
+				f.write('<i>{} and {}: </i><br/>\n'.format(p.origin.name,q.origin.name,))
+			f.write('<img src="{}"/><img src="{}"/><br/>\n'.format(
+				p.location, q.location))
 	f.write('</body>\n</html>\n')
 	f.close()
 	return res
 	
 	
+# search for cliques of images all linking each other
+def cliques():
+	cliques=[]
+	imgs=filter(lambda p:len(p.relates)>2, Tum.imgs.values()[:])
+	imgs.sort(key=lambda p:len(p.relates), reverse=True)
+	for p in imgs:
+		clique=[p]
+		for s in p.relates.keys():
+			for cand in clique:
+				if not s.relates.has_key(cand):
+					break # clique candidate is not linked by test node
+			else:
+				clique.append(s) # all clique candidates are as well liked by node
+				#TODO: parallel
+		if len(clique)>2:
+			cliques.append(clique)
+	return cliques
+
 
 # save image info
 def save(filename='.images'):
@@ -396,6 +452,7 @@ def load(filename='.images'):
 
 # initialize from file system and sources files
 def init():
+	print "Begin reading directory content and origin information"
 	# instantiate img objects for all images on disk
 	for path, dirs, files in os.walk('.'):
 		if path.endswith('/img'):
@@ -414,16 +471,19 @@ def init():
 		for t in blogobj:
 			t.relates=t.relates.union(set(blogobj))
 			t.relates.remove(t)
+	print "Done!"
 	pictures=Tum.imgs.values()
 	return pictures
 	
 try:
+	print "Try to load index dump"
 	load()
 except Exception, e:
 	print 'Failed loading image information'
 	print e.args
 	print e.message
 	
+
 pictures=init()
 pictures.sort(key=lambda x:len(x.sources))
 pictures.reverse()
