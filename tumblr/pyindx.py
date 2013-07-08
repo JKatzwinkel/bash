@@ -408,11 +408,11 @@ def cliques():
 				if not s.relates.has_key(cand):
 					break # clique candidate is not linked by test node
 			else:
-				clique.add(s) # all clique candidates are as well liked by node
-				#TODO: 
+				clique.append(s) # all clique candidates are as well liked by node
+				#TODO: parallel
 		if len(clique)>2:
 			cliques.append(clique)
-
+	return cliques
 
 
 # save image info
