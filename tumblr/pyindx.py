@@ -89,12 +89,12 @@ class Tum:
 		heights=sorted(dimensions[1])
 		msr.append(sqr(1.*widths[0]/widths[1]*heights[0]/heights[1]))
 		#hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
-		hstcor=measure.image_histograms(self, pict)
-		msr.extend(hstcor)
+		#hstcor=measure.image_histograms(self, pict)
+		#msr.extend(hstcor)
 		mood=measure.image_histmediandist(self, pict)
 		msr.append(1-mood)
-		colorful=measure.image_histrelcor(self, pict)
-		msr.extend(colorful)
+		#colorful=measure.image_histrelcor(self, pict)
+		#msr.extend(colorful)
 		return sum(msr)/len(msr)
 	
 	# finds related images

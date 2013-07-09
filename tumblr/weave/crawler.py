@@ -1,5 +1,7 @@
-import urllib2
+from urllib2 import openurl
+from urllib import urlretrieve
 from bs4 import BeautifulSoup
+from urlparse import urlparse, urlsplit, urljoin
 
 
 # extract stuff from page obtained by urllib2.urlopen
@@ -43,5 +45,8 @@ req = urllib2.Request(urlname, headers={
 	'Cache-Control': 'max-age=0'
 	})
 
-page = urllib2.urlopen(req)
+page = openurl(req)
 
+#bilder:
+# http://stackoverflow.com/questions/3042757/downloading-a-picture-via-urllib-and-python
+urlretrieve(url, filename)

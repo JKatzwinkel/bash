@@ -11,6 +11,9 @@ import util.measures as measure
 class Histogram:
 	def __init__(self, image):
 		self.data = image.histogram()
+		self.mediane=[]
+		self.scale=0
+		self.bands=0
 
 # featured Image
 class Pict:
