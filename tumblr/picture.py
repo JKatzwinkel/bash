@@ -12,28 +12,30 @@ def scaledown(a):
 
 class Histogram:
 	def __init__(self, image):
+		data=[]
+		bands=1
 		if isinstance(image, pil.Image):
 			data = image.histogram()
 			bands = min(3, len(image.mode)) # cut A band of RGBA images
-		elif type(a) == 'list':
+		elif type(image) is list:
 			data = image[:]
-			band=1
+			bands=1
 			if len(data)>64:
 				bands=3
 		# struct band hists
 		self.bands = []
-		size=len(data)/bands
+		size=max(len(data)/bands, 32)
 		for b in range(0,len(data), size):
 			self.bands.append(data[b:b+size])
 		# prepare median values
 		self.mediane = [stats.median_histogram(band) 
-											for band in self.bands)]
+											for band in self.bands]
 		self._hex=''
 
 	def hex(self):
 		if len(self._hex)<1:
 			aa=[]
-			for band in self.bands
+			for band in self.bands:
 				aa.extend(band)
 			self._hex=''.join([('%02x' % b) for b in aa])
 		return self._hex
