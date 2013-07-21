@@ -152,7 +152,7 @@ fi
 
 
 # regexes
-reimgsrc="http://[0-9]\{2\}\.media\.tumblr\.com\(/[0-9a-f]*\)\?/tumblr_\([0-9a-z_]*\)\.$formats"
+reimgsrc="http://[0-9]\{2\}\.media\.tumblr\.com\(/[0-9a-f]*\)\?/tumblr_\(\w*\)\.$formats"
 reimg="img src=[\"\']$reimgsrc"
 
 
@@ -219,14 +219,16 @@ while [ $(( line )) -le $(wc -l 'tumbs' | cut -d' ' -f1 ) ]; do
         for i in $(seq 1 ${#progress}); do
             echo -n " "
         done
-        echo ""
 
         #TODO: make links lowercase
+        #TODO: trim http encoded chars (2F) in links
         for link in $(echo $html | grep -o "$retumb"); do
             if [ -z "$(grep -o "$link" "tumbs" | head -1)" ]; then
                 echo $link >> "tumbs"
             fi
         done
+
+        echo ""
 
         #total=$(( total+downloads ))
         if [ $(( total )) -ge $(( dlnum )) ]; then
