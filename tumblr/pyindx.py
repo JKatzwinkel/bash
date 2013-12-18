@@ -89,8 +89,8 @@ class Tum:
 		heights=sorted(dimensions[1])
 		msr.append(sqr(1.*widths[0]/widths[1]*heights[0]/heights[1]))
 		#hst=sum(map(lambda (x,y):(x-y)**2, zip(self.histogram, pict.histogram)))
-		#hstcor=measure.image_histograms(self, pict)
-		#msr.extend(hstcor)
+		hstcor=measure.image_histograms(self, pict)
+		msr.extend(hstcor)
 		mood=measure.image_histmediandist(self, pict)
 		msr.append(1-mood)
 		#colorful=measure.image_histrelcor(self, pict)
@@ -250,9 +250,10 @@ def saveset(images, filename):
 def savehtml(images, filename):
 	f=open(filename, 'w')
 	f.write('<html>\n<body>')
-	for p in images:
+	for p in images[:100]:
 		f.write(' <div>\n')
 		f.write('  <h3>{}</h3/>\n'.format(p.name))
+		f.write('  {} similar\n'.format(len(p.relates)))
 		if p.origin:
 			f.write('  {}\n'.format(p.origin.name))
 		f.write('  <table height="{}">\n'.format(p.size[1]))
@@ -261,13 +262,16 @@ def savehtml(images, filename):
 		f.write('   </td>\n')
 		thmbsize=min(p.size[1]/2, 300)
 		rowheight=thmbsize+10
-		for i,s in enumerate(sorted(p.relates.keys(), key=lambda x:x.size[0]/x.size[1])):
+		related=sorted(p.relates.items(), key=lambda (k,v):v)
+		related=related[:10]
+		related=[r[0] for r in related]
+		for i,s in enumerate(sorted(related, key=lambda x:x.size[0]/x.size[1])):
 			f.write('     <td height="{}" valign="top">\n'.format(rowheight))
 			f.write('      <img src="{}" height="{}"><br/>\n'.format(s.location, thmbsize))
 			if (s.origin):
 				f.write('      {}\n'.format(s.origin.name))
 			f.write('     </td>\n')
-			if i+1==len(p.relates)/2:
+			if i+1==len(related)/2:
 				f.write('    </tr><tr>\n')
 				rowheight=p.size[1]-rowheight
 		f.write('   </tr>\n  </table>\n')
@@ -279,7 +283,7 @@ def savehtml(images, filename):
 def savegroups(groups, filename):
 	f=open(filename, 'w')
 	f.write('<html>\n<body>')
-	for group in groups:
+	for group in groups[:50]:
 		f.write(' <div>\n')
 		f.write('  <h3>{} Members</h3/>\n'.format(len(group)))
 		p=group.pop(0)
@@ -300,6 +304,35 @@ def savegroups(groups, filename):
 				rowheight=p.size[1]-rowheight
 		f.write('   </tr>\n  </table>\n')
 		f.write(' </div>\n')
+	f.write('</body>\n</html>\n')
+	f.close()
+
+def stumblr(seed, filename):
+	f=open(filename, 'w')
+	f.write('<html>\n<body>')
+	p = seed
+	cnt = 0
+	visited={}
+	pos=0
+	try:
+		while p != None and cnt < 400:
+			visited[p]=True
+			f.write(' <img src="{}" height="540"/>\n'.format(p.location))
+			pos+=p.size[0]*540/p.size[1]
+			if pos>980:
+				f.write(' <br/>\n')
+				pos=0
+			cnt+=1
+			similar = sorted(p.relates.items(), key=lambda x:x[1], reverse=True)
+			chc=0
+			while chc < len(similar) and visited.get(similar[chc][0]) != None:
+				chc+=1
+			if chc < len(similar):
+				p = similar[chc][0]
+			else:
+				break
+	except Exception, e:
+		f.write(' <b>{}</b>\n'.format(e.message))
 	f.write('</body>\n</html>\n')
 	f.close()
 

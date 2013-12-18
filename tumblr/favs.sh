@@ -29,7 +29,7 @@ function print_manual () {
     echo "        if this option is set, the most popular blogs are not"
     echo "        determined by their absolute number of featured images"
     echo "        found on disk, but by an index normalized by their"
-    echo "        respective occurences in the local source file."
+    echo "        respective occurences in the relevant source files."
     echo "        that is, computing the ratio between every image ever"
     echo "        featured by that blog and the number of images that"
     echo "        the user did actually approve of."    
@@ -110,7 +110,11 @@ if [ $proportion ]; then
 	while read line; do
 		fields=( $(echo $line | grep -o "[^ ]*") )
 		count="$(echo ${fields[0]} | grep -o "[1-9][0-9]*")"
-		total="$(grep ${fields[1]} $dir/sources | wc -l)"
+		if [ ! $localsrc ]; then
+			total="$(grep -h ${fields[1]} $dir/sources sources | sort | uniq | wc -l)"
+		else
+			total="$(grep -c ${fields[1]} $dir/sources)"
+		fi
 		if [ $total -gt "0" ]; then
 			ratio=$(( 100*$count/$total ))
 		else

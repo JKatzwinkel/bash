@@ -35,6 +35,9 @@ array=$( "${array[@]/%/_content}" )
 
 # http://wiki.bash-hackers.org/commands/builtin/printf
 printf "%5s" $i # preserver 5 chars for string variable, align right
+# n-th parameter:
+echo "${!n}"
+
 # format numbers:
 printf "%3.3d" $x # trailing 0s, 3 digits
 printf "%x\n" $decimal #hex value
