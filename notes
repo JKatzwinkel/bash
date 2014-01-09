@@ -33,6 +33,8 @@ echo ${#arr[@]} #length
 #fixed prefix:
 array=$( "${array[@]/%/_content}" )
 
+# http://wiki.bash-hackers.org/commands/builtin/printf
+printf "%5s" $i # preserver 5 chars for string variable, align right
 # n-th parameter:
 echo "${!n}"
 
