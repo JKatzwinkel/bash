@@ -1,0 +1,44 @@
+# better syntax highlighting:
+# https://github.com/craigbarnes/nanorc, 
+# git://github.com/craigbarnes/nanorc.git
+# provides syntax highlighting for markdown, as it seems!
+# will overwrite! custom ~/.nanorc, so backup.
+# will also overwrite default key bindings, so ^O will suddenly be insert main,
+# ^X will be cut,
+# ^V uncut,
+# ^Z undo,
+# ^Y redo,
+# ^F both whereis & regex search (but between which can be switched with ^R),
+# ^L goto line,
+# ^A mark text
+# quit command will be bound to ^Q,
+# save bound to ^S,
+# cancel bound to ^W
+# key bindings help bar will be disabled, so search for 'set nohelp' to change
+# syntax highlighting looks kinda weird, but seems to act quite smart
+# to deactivate highlighting of trailing whitespaces, search for 'Show trailing whitespace'
+# copy of modified resulting .nanorc is in .nanorc.github
+# note that while it may seem the other way around, the syntax keyword
+# specifies to which file names the _following_ parameters apply, not the
+# preceding ones!!!
+#
+# Useful default keybindings:
+# Use Alt+a to select a block, then Alt+} will indent the selected block,
+# and Alt+{ will outdent the block.
+#
+# Legal colors for foreground and background color are:
+# white, black, red, blue, green, yellow, magenta, and cyan.
+# You may use the prefix "bright" to force a stronger color highlight
+set tabsize 2
+set autoindent
+set const
+set regexp
+set nonewlines
+set smarthome
+set smooth
+set morespace
+set nowrap
+set matchbrackets "(<[{)>]}"
+set undo
+set backup
+
