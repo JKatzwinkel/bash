@@ -1,18 +1,28 @@
 #!/bin/bash
 
+# extract url from rss feed
+#echo "retrieve.."
 url=$(wget http://www.titanic-magazin.de/ich.war.bei.der.waffen.rss -q -O - \
 	| grep -A 4 "<title>Gärtners kritisches Sonntags" \
 	| sed -n 's/\s*<link>\([^<]*\)<.*/\1/gp')
 
-if [ ! -f urls.txt ]; then
+if [ -z "$url" ]; then
+#	echo "no link found"
+	exit
+fi
+# check if url is known already
+if [ ! -e "urls.txt" ]; then
+#	echo "create file urls.txt"
 	touch urls.txt
 fi
 if [ -n "$(grep $url urls.txt)" ]; then
+#	echo "no new entries. quit.."
 	exit
 fi
 
 today=$(date +%y%m%d)
-outfile="gksf$today"
+outfile="gaertner$today"
+#echo "saving to $outfile.{html,pdf}"
 
 echo "$today $url" >> urls.txt
 
