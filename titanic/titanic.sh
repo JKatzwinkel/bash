@@ -4,11 +4,17 @@ url=$(wget http://www.titanic-magazin.de/ich.war.bei.der.waffen.rss -q -O - \
 	| grep -A 4 "<title>Gärtners kritisches Sonntags" \
 	| sed -n 's/\s*<link>\([^<]*\)<.*/\1/gp')
 
+if [ ! -f urls.txt ]; then
+	touch urls.txt
+fi
 if [ -n "$(grep $url urls.txt)" ]; then
 	exit
 fi
 
-echo $url >> urls.txt
+today=$(date +%y%m%d)
+outfile="gksf$today"
+
+echo "$today $url" >> urls.txt
 
 echo """
 <?xml version=\"1.0\" encoding=\"utf-8\"?>
@@ -20,10 +26,11 @@ echo """
 	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />
 </head>
 <body>
-	<div style=\"font-size:5px\">""" > out.html
+	<div style=\"font-size:5px\">""" > "$outfile.html"
 
 wget $url -q -O - \
-	| sed -n 's/.*\(Gärtners kritisches Sonntagsfrühstück\):\([^<]*\)<\/div.*/<b>\1<\/b><h4>\2<\/h4>/p
+	| sed -n 's/.*class=.tt_news-date.*\(05.01.2014\).*/\1: /p
+	s/.*\(Gärtners kritisches Sonntagsfrühstück\):\([^<]*\)<\/div.*/<b>\1<\/b><h4>\2<\/h4>/p
 	/<div class=.tt_news-bodytext/,/<\/div>/ { 
 		/<p class/,/^\s*$/ {p}
 	}' \
@@ -34,10 +41,14 @@ wget $url -q -O - \
 	| sed 's/Ö/\&Ouml;/g' \
 	| sed 's/ü/\&uuml;/g' \
 	| sed 's/Ü/\&Uuml;/g' \
-	| sed 's/ß/\&szlig;/g' >> out.html
+	| sed 's/„/\&raquo;/g' \
+	| sed 's/“/\&laquo;/g' \
+	| sed 's/é/\&eacute;/g' \
+	| sed 's/è/\&egrave;/g' \
+	| sed 's/ß/\&szlig;/g' >> "$outfile.html"
 
-echo "</body></html>" >> out.html
+echo "</body></html>" >> "$outfile.html"
 
 #html2ps -o out.ps -e UTF-8 out.html 
 #html2ps -o out.ps out.html 
-htmldoc -t pdf -f out.pdf --webpage out.html
+htmldoc -t pdf -f "$outfile.pdf" --webpage "$outfile.html"
