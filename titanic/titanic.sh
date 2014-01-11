@@ -11,20 +11,25 @@ if [ -z "$url" ]; then
 	exit
 fi
 # check if url is known already
-if [ ! -e "urls.txt" ]; then
-#	echo "create file urls.txt"
-	touch urls.txt
+dir="~/.titanic"
+if [ ! -d "$dir" ]; then
+	mkdir -p $dir
 fi
-if [ -n "$(grep $url urls.txt)" ]; then
+urlfile="$dir/urls.txt"
+if [ ! -e "$urlfile" ]; then
+#	echo "create file urls.txt"
+	touch $urlfile
+fi
+if [ -n "$(grep $url $urlfile)" ]; then
 #	echo "no new entries. quit.."
 	exit
 fi
 
 today=$(date +%y%m%d)
-outfile="gaertner$today"
+outfile="$url/gaertner$today"
 #echo "saving to $outfile.{html,pdf}"
 
-echo "$today $url" >> urls.txt
+echo "$today $url" >> $urlfile
 
 echo """
 <?xml version=\"1.0\" encoding=\"utf-8\"?>
@@ -62,3 +67,5 @@ echo "</body></html>" >> "$outfile.html"
 #html2ps -o out.ps -e UTF-8 out.html 
 #html2ps -o out.ps out.html 
 htmldoc -t pdf -f "$outfile.pdf" --webpage "$outfile.html"
+lpr "$outfile.pdf"
+

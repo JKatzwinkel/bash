@@ -28,3 +28,10 @@ pip-log.txt
 
 #Backup Files
 *~
+
+#feed reader artifacts
+titanic/*.html
+titanic/*.pdf
+titanic/*.ps
+titanic/*.txt
+
