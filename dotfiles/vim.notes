@@ -4,3 +4,6 @@ http://stackoverflow.com/questions/563616/vim-and-ctags-tips-and-tricks
 ctags -R .
 ctags -R -f ./.git/tags .
 dann schoen: <C-]> oder :ta function_name
+
+source code browser plugin taglist:
+http://segfault.in/2009/12/vim-plugin-taglist/
