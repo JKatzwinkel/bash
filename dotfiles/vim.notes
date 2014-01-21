@@ -1,0 +1,6 @@
+index source code language items (methods, ...) w ctags:
+http://blog.stwrt.ca/2012/10/31/vim-ctags
+http://stackoverflow.com/questions/563616/vim-and-ctags-tips-and-tricks
+ctags -R .
+ctags -R -f ./.git/tags .
+dann schoen: <C-]> oder :ta function_name
