@@ -11,20 +11,25 @@ if [ -z "$url" ]; then
 	exit
 fi
 # check if url is known already
-if [ ! -e "urls.txt" ]; then
-#	echo "create file urls.txt"
-	touch urls.txt
+dir="$HOME/.titanic"
+if [ ! -d "$dir" ]; then
+	mkdir -p $dir
 fi
-if [ -n "$(grep $url urls.txt)" ]; then
+urlfile="$dir/urls.txt"
+if [ ! -e "$urlfile" ]; then
+#	echo "create file urls.txt"
+	touch $urlfile
+fi
+if [ -n "$(grep $url $urlfile)" ]; then
 #	echo "no new entries. quit.."
 	exit
 fi
 
 today=$(date +%y%m%d)
-outfile="gaertner$today"
-#echo "saving to $outfile.{html,pdf}"
+outfile="$dir/gaertner$today"
+echo "saving to $outfile.{html,pdf}"
 
-echo "$today $url" >> urls.txt
+echo "$today $url" >> $urlfile
 
 echo """
 <?xml version=\"1.0\" encoding=\"utf-8\"?>
@@ -36,7 +41,7 @@ echo """
 	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />
 </head>
 <body>
-	<div style=\"font-size:5px\">""" > "$outfile.html"
+	<div style=\"font-size:6px\">""" > "$outfile.html"
 
 wget $url -q -O - \
 	| sed -n 's/.*class=.tt_news-date.*\(05.01.2014\).*/\1: /p
@@ -55,10 +60,16 @@ wget $url -q -O - \
 	| sed 's/“/\&laquo;/g' \
 	| sed 's/é/\&eacute;/g' \
 	| sed 's/è/\&egrave;/g' \
+	| sed 's/…/\&#8230;/g' \
+	| sed 's/‘/\&#8217;/g' \
+	| sed 's/–/\&#8212;/g' \
 	| sed 's/ß/\&szlig;/g' >> "$outfile.html"
+
 
 echo "</body></html>" >> "$outfile.html"
 
 #html2ps -o out.ps -e UTF-8 out.html 
 #html2ps -o out.ps out.html 
-htmldoc -t pdf -f "$outfile.pdf" --webpage "$outfile.html"
+htmldoc -t pdf -f "$outfile.pdf" --size a4 --textfont times --webpage "$outfile.html"
+lpr "$outfile.pdf"
+
