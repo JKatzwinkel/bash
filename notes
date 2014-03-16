@@ -30,6 +30,7 @@ ${string%substring}  # delete shortest substring from back
 arr=( $(echo "eins zwei" | grep -o "[^ ]*") )
 echo ${arr[@]} #entire array
 echo ${#arr[@]} #length
+echo ${#arr[$i]} # field at position $i starting with 0
 #fixed prefix:
 array=$( "${array[@]/%/_content}" )
 
