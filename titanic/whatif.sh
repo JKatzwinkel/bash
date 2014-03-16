@@ -2,31 +2,29 @@
 
 # checkout latest whatif posting
 wget http://whatif.xkcd.com -q -O - \
-| sed -n '/\s*<article class=.entry.>/,/\s*<\/article>/p' \
-> out.html
+	| sed -n '/\s*<article class=.entry.>/,/\s*<\/article>/p' \
+	> out.html
 # extract resource identifier
 url=$(grep "\s*<a href.*><h1>" out.html | grep -o "what-if\.xkcd\.com\/[0-9]*\/")
-echo $url
-
-# extract footnotes
+#echo $url
 
 if [ -z "$url" ]; then
-#echo "no link found"
-exit
+	#echo "no link found"
+	exit
 fi
 # check if url is known already
 dir="$HOME/.titanic"
 if [ ! -d "$dir" ]; then
-mkdir -p $dir
+	mkdir -p $dir
 fi
 urlfile="$dir/urls.txt"
 if [ ! -e "$urlfile" ]; then
-#echo "create file urls.txt"
-touch $urlfile
+	#echo "create file urls.txt"
+	touch $urlfile
 fi
 if [ -n "$(grep $url $urlfile)" ]; then
-echo "no new entries. .."
-#exit
+	echo "no new entries. .."
+	exit
 fi
 
 ./xkcd.sh
@@ -48,14 +46,15 @@ echo """
   <style>
 .refnum {
     position: relative;
-    left: -2px;
+    left: -1px;
     bottom: 1ex;
-    font-family: Verdana, sans-serif;
+    font-family: Times, serif;
     font-size: .8em;
     font-weight: bold;
     cursor: pointer;}
 #question {
-    padding-top: 1.5em;}
+    padding-top: 1.5em;
+		margin:4em;}
 #attribute {
     padding-bottom: 1.5em;
     text-align: right;
@@ -70,6 +69,11 @@ echo """
   max-width: 100%;
   margin: 0 auto;
   padding: 0.7em 0;}
+.footnotes {
+	font-family: Times, serif;
+	margin: 3em;
+	max-width: 80%;
+}
 </style>
 </head>
 <body>
@@ -81,6 +85,6 @@ echo "</body></html>" >> "$outfile.html"
 
 #html2ps -o out.ps -e UTF-8 out.html 
 #html2ps -o out.ps out.html 
-#htmldoc -t pdf -f "$outfile.pdf" --size a4 --textfont times --webpage "$outfile.html"
-#lpr "$outfile.pdf"
+htmldoc -t pdf -f "$outfile.pdf" --size a4 --textfont times --webpage "$outfile.html"
+lpr "$outfile.pdf"
 
