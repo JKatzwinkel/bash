@@ -55,16 +55,18 @@ sed -i 's/#/\\#/g' out.tex
 # em tags
 sed -i 's/<em>\([^<]*\)<\/em>/\\textit{\1}/g' out.tex
 # p tags
-sed -i 's/<p>//g; s/<\/p>/\n/g;' out.tex
+sed -i 's/<p id=.question.>\(.*\)<\/p>/\\begin{quote}\1\\end{quote}/g; s/<p id=.attribute.>\(.*\)<\/p>/\\raggedleft\1\n/g' out.tex
+sed -i 's/<p>/\\raggedright /g; s/<\/p>/\n/g;' out.tex
 # ref tags # insert linebreaks at ref tags
 sed -i 's/\(<span class=.ref.><span class=.refnum.>\)/\n\1/g' out.tex
 sed -i 's/<span class=.ref.><span class=.refnum.>[^<]*<\/span><span class=.refbody.>\(.*\)<\/span><\/span>/\\footnote{\1}/g' out.tex
 # a tags [multiple times in case theres multiple links in one line]
 for i in 1 2 3 4 5; do
-  sed -i 's/\(.*\)<a href=.\([^ ]*\)\">\(.*\)<\/a>/\1\3\\textit{(\\url{\2})}/g' out.tex
+  sed -i 's/\(.*\)<a href=.\([^ ]*\)\">\(.*\)<\/a>/\1\3\\textsuperscript{(\\url{\2})}/g' out.tex
 done
 # img tags
-sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\includegraphics\{'${dir}/xkcd'\2\}\1#g' out.tex
+#sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{figure}\\includegraphics\{'${dir}/xkcd'\2\}\\caption{\1}\\end{figure}#g' out.tex
+sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\centering\\includegraphics\{'${dir}/xkcd'\2\}\\footnote{\1}\n#g' out.tex
 
 
 
