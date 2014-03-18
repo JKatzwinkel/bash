@@ -31,7 +31,6 @@ if [ ! -d "$dir/xkcd" ]; then
   mkdir -p "$dir/xkcd"
 fi
 
-
 # download images
 while read src; do
   # create issue image directory from image link locators
@@ -39,9 +38,9 @@ while read src; do
   if [ ! -d "$dir/xkcd$imdir" ]; then
     mkdir -p "$dir/xkcd$imdir"
   fi
-  #wget "http://whatif.xkcd.com$src" -O $dir/xkcd$src
+	echo "Save image under $dir/xkcd$src..."
+  wget -q "http://whatif.xkcd.com$src" -O $dir/xkcd$src
 done < <(sed -n 's/<img .* src=\"\([^ ]*\)\">/\1/p' out.tex)
-
 
 ## html conversion:
 # remove article tags, replace h1 
@@ -63,14 +62,11 @@ for i in 1 2 3 4 5; do
   sed -i 's/\(.*\)<a href=.\([^ ]*\)\">\(.*\)<\/a>/\1\3\\textsuperscript{(\\url{\2})}/g' out.tex
 done
 # img tags
-#sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{figure}\\includegraphics\{'${dir}/xkcd'\2\}\\caption{\1}\\end{figure}#g' out.tex
 sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=2.8cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
-
 
 today=$(date +%y%m%d)
 outfile="$dir/whatif$today"
-echo "saving to $outfile.{tex,pdf}"
-
+#echo "saving to $outfile.{tex,pdf}"
 echo "$today $url" >> $urlfile
 
 echo '''
@@ -79,11 +75,9 @@ echo '''
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=black]{hyperref}
 \begin{document}
 ''' > "$outfile.tex"
-
 cat out.tex >> "$outfile.tex"
-
 echo '\end{document}' >> "$outfile.tex"
 
 pdflatex -output-directory $dir/xkcd $outfile.tex
-lpr "$outfile.pdf"
+lpr "xkcd/$outfile.pdf"
 
