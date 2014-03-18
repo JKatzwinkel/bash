@@ -51,12 +51,12 @@ sed -i 's/<\/*article[^<>]*>//g; s/<h1>\(.*\)<\/h1>/\\section*{\1}/g' out.tex
 # resolve html special char escapables
 sed -i "s/&#39;/'/g; s/&quot;/\"/g" out.tex
 # resolve painful latex pitfall characters:
-sed -i 's/#/\\#/g' out.tex
+sed -i 's/#/\\#/g; s/—/ --- /g' out.tex
 # em tags
 sed -i 's/<em>\([^<]*\)<\/em>/\\textit{\1}/g' out.tex
 # p tags
-sed -i 's/<p id=.question.>\(.*\)<\/p>/\\begin{quote}\1\\end{quote}/g; s/<p id=.attribute.>\(.*\)<\/p>/\\raggedleft\1\n/g' out.tex
-sed -i 's/<p>/\\raggedright /g; s/<\/p>/\n/g;' out.tex
+sed -i 's/<p id=.question.>\(.*\)<\/p>/\\begin{abstract}\1\\end{abstract}/g; s/<p id=.attribute.>\(.*\)<\/p>/\\begin{flushright}\1\\end{flushright}\n/g' out.tex
+sed -i 's/<p>//g; s/<\/p>/\\\\\n/g;' out.tex
 # ref tags # insert linebreaks at ref tags
 sed -i 's/\(<span class=.ref.><span class=.refnum.>\)/\n\1/g' out.tex
 sed -i 's/<span class=.ref.><span class=.refnum.>[^<]*<\/span><span class=.refbody.>\(.*\)<\/span><\/span>/\\footnote{\1}/g' out.tex
@@ -66,7 +66,7 @@ for i in 1 2 3 4 5; do
 done
 # img tags
 #sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{figure}\\includegraphics\{'${dir}/xkcd'\2\}\\caption{\1}\\end{figure}#g' out.tex
-sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\centering\\includegraphics\{'${dir}/xkcd'\2\}\\footnote{\1}\n#g' out.tex
+sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=2.8cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
 
 
 
@@ -80,7 +80,7 @@ echo "$today $url" >> $urlfile
 echo '''
 \documentclass{article}
 \usepackage{graphicx}
-\usepackage{hyperref}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=black]{hyperref}
 \begin{document}
 ''' > "$outfile.tex"
 
