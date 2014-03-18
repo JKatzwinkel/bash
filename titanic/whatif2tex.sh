@@ -23,8 +23,8 @@ if [ ! -e "$urlfile" ]; then
 	touch $urlfile
 fi
 if [ -n "$(grep $url $urlfile)" ]; then
-	echo "no new entries. .."
-	#exit
+	#echo "no new entries. .."
+	exit
 fi
 # create image directory, if needed
 if [ ! -d "$dir/xkcd" ]; then
@@ -42,8 +42,6 @@ while read src; do
   #wget "http://whatif.xkcd.com$src" -O $dir/xkcd$src
 done < <(sed -n 's/<img .* src=\"\([^ ]*\)\">/\1/p' out.tex)
 
-# fix image location paths
-#sed -i 's/\(<img .*\)title=.\(.*\). src=.\([^ ]*\).>/\1src=\"http:\/\/whatif.xkcd.com\3\">\n<p class=\"illustration\">\2<\/p>/g' out.tex
 
 ## html conversion:
 # remove article tags, replace h1 
@@ -69,8 +67,6 @@ done
 sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=2.8cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
 
 
-
-
 today=$(date +%y%m%d)
 outfile="$dir/whatif$today"
 echo "saving to $outfile.{tex,pdf}"
@@ -88,6 +84,6 @@ cat out.tex >> "$outfile.tex"
 
 echo '\end{document}' >> "$outfile.tex"
 
-pdflatex $outfile.tex
-#lpr "$outfile.pdf"
+pdflatex -output-directory $dir/xkcd $outfile.tex
+lpr "$outfile.pdf"
 
