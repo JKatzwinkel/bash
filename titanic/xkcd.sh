@@ -18,19 +18,7 @@ while read line; do
 done < <(cat out.html) > tmp.html
 cp tmp.html out.html
 
-#cat tmp.html | sed -n '/<\/p>$/ !{N; s/\n//p}; p' > out.html
-
-# begin to extract footnotes:
-# links:
-#sed -n "s/.*<a href=.\(.* \([a-z]*\)>\(.*\)<\/link>.*/<b>\1<\/b> \2<br>/p" out.html >> footnotes.html
-#sed -i "s/<link \([a-z]*\)>\(.*\)<\/link>.*/<b>\1<\/b> \2<br>/p" out.html
-
 sed -i 's/\(<span class=.ref.><span class=.refnum.>\)/\n\1/g' out.html
-#for ix in 0-9 a-z; do
-#	echo $ix
-#	sed -n "s/.*$fnx\[\([$ix]*\)\]<\/span><span class=.refbody.>\(.*\)<\/span><\/span>.*/<b>\1<\/b> \2<br>/gp" out.html >> footnotes.html
-#	sed -i "s/\($fnx\)\[\([$ix]*\)\]\(<\/span>\)<span class=.refbody.>\(.*\)\(<\/span><\/span>\)/\1\2\3/g" out.html
-#done
 # footnotes
 ix="0-9"
 sed -n "s/.*$fnx\[\([$ix]*\)\]<\/span><span class=.refbody.>\(.*\)\($\|<\/span><\/span>\).*/<b>\1<\/b> \2<br>/p" out.html >> footnotes.html

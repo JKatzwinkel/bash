@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# checkout latest whatif posting
+wget http://whatif.xkcd.com -q -O - \
+	| sed -n '/\s*<article class=.entry.>/,/\s*<\/article>/p' \
+	> out.tex
+# extract resource identifier
+url=$(grep "\s*<a href.*><h1>" out.tex | grep -o "what-if\.xkcd\.com\/[0-9]*\/")
+#echo $url
+
+if [ -z "$url" ]; then
+	#echo "no link found"
+	exit
+fi
+# check if url is known already
+dir="$HOME/.titanic"
+if [ ! -d "$dir" ]; then
+	mkdir -p $dir
+fi
+urlfile="$dir/urls.txt"
+if [ ! -e "$urlfile" ]; then
+	#echo "create file urls.txt"
+	touch $urlfile
+fi
+if [ -n "$(grep $url $urlfile)" ]; then
+	echo "no new entries. .."
+	#exit
+fi
+# create image directory, if needed
+if [ ! -d "$dir/xkcd" ]; then
+  mkdir -p "$dir/xkcd"
+fi
+
+
+# download images
+while read src; do
+  # create issue image directory from image link locators
+  imdir=$(echo $src | sed -n 's/\(.\+\/\).*$/\1/gp')
+  if [ ! -d "$dir/xkcd$imdir" ]; then
+    mkdir -p "$dir/xkcd$imdir"
+  fi
+  #wget "http://whatif.xkcd.com$src" -O $dir/xkcd$src
+done < <(sed -n 's/<img .* src=\"\([^ ]*\)\">/\1/p' out.tex)
+
+# fix image location paths
+#sed -i 's/\(<img .*\)title=.\(.*\). src=.\([^ ]*\).>/\1src=\"http:\/\/whatif.xkcd.com\3\">\n<p class=\"illustration\">\2<\/p>/g' out.tex
+
+## html conversion:
+# resolve html special char escapables
+sed -i "s/&#39;/'/g; s/&quot;\"/g" out.tex
+# insert linebreaks at ref tags
+sed -i 's/\(<span class=.ref.><span class=.refnum.>\)/\n\1/g' out.tex
+# p tags
+sed -i 's/<p>//g; s/<\/p>//g;' out.tex
+# ref tags
+sed -i 's/<span class=.ref.><span class=.refnum.>[^<]*<\/span><span class=.refbody.>\(.*\)<\/span><\/span>/\\footnote{\1}/g' out.tex
+# a tags [multiple times in case theres multiple links in one line]
+for i in 1 2 3 4 5; do
+  sed -i 's/\(.*\)<a href=.\([^ ]*\).>\(.*\)<\/a>/\1\3\\footnote{\\url{\2}}/g' out.tex
+done
+# img tags
+sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\includegraphics\{'${dir}/xkcd'\2\}\1#g' out.tex
+
+exit 0
+
+fnx="<span class=\"ref\"><span class=\"refnum\">"
+echo "<p class=\"footnotes\">" > footnotes.tex
+
+# extract hyperlink locators
+sed -i 's/\(<a href=.[^ ]*.>\)/\n\1/g' out.tex
+indices=(a b c d e f g h i j k l m n o p)
+i=0
+while read line; do
+  echo $line | sed "s/\(.*\)\(<a href=..*.>.*<\/a>\)\(.*\)/\1\2<span class=\"refnum\">${indices[$i]}<\/span>\3/g"
+  if [ -n "$(echo $line | grep '^<a href')" ]; then
+    echo "<b>${indices[$i]}</b>" $(echo $line | sed -n "s/.*<a href=\"\([^ ]*\)\">.*<\/a>.*/\1/p") "<br>" >> footnotes.tex
+    i=$(( i+1 ))
+  fi
+done < <(cat out.tex) > tmp.tex
+cp tmp.tex out.tex
+
+# footnotes
+ix="0-9"
+sed -n "s/.*$fnx\[\([$ix]*\)\]<\/span><span class=.refbody.>\(.*\)\($\|<\/span><\/span>\).*/<b>\1<\/b> \2<br>/p" out.tex >> footnotes.tex
+sed -i "s/\($fnx\)\[\([$ix]*\)\]\(<\/span>\)<span class=.refbody.>\(.*\)\($\|<\/span><\/span>.*\)/\1\2\3\5/" out.tex
+# extract hyperlink footnotes
+echo "</p>" >> footnotes.tex
+
+cat footnotes.tex >> out.tex
+
+
+today=$(date +%y%m%d)
+outfile="$dir/whatif$today"
+echo "saving to $outfile.{tex,pdf}"
+
+echo "$today $url" >> $urlfile
+
+echo '''
+\documentclass{article}
+\usepackage{hyperref}
+\begin{document}
+''' > "$outfile.tex"
+
+cat out.tex >> "$outfile.tex"
+
+echo '\end{document}' >> "$outfile.tex"
+
+#html2ps -o out.ps -e UTF-8 out.tex 
+#html2ps -o out.ps out.tex 
+#htmldoc -t pdf -f "$outfile.pdf" --size a4 --textfont times --webpage "$outfile.tex"
+#lpr "$outfile.pdf"
+pdflatex $outfile.tex
+
