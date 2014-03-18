@@ -31,6 +31,7 @@ if [ ! -d "$dir/xkcd" ]; then
   mkdir -p "$dir/xkcd"
 fi
 
+
 # download images
 while read src; do
   # create issue image directory from image link locators
@@ -38,9 +39,9 @@ while read src; do
   if [ ! -d "$dir/xkcd$imdir" ]; then
     mkdir -p "$dir/xkcd$imdir"
   fi
-	echo "Save image under $dir/xkcd$src..."
-  wget -q "http://whatif.xkcd.com$src" -O $dir/xkcd$src
+  wget "http://whatif.xkcd.com$src" -O $dir/xkcd$src
 done < <(sed -n 's/<img .* src=\"\([^ ]*\)\">/\1/p' out.tex)
+
 
 ## html conversion:
 # remove article tags, replace h1 
@@ -51,6 +52,8 @@ sed -i "s/&#39;/'/g; s/&quot;/\"/g" out.tex
 sed -i 's/#/\\#/g; s/—/ --- /g' out.tex
 # em tags
 sed -i 's/<em>\([^<]*\)<\/em>/\\textit{\1}/g' out.tex
+# sub tags
+sed -i 's/<sub>\([^<]*\)<\/sub>/\\textsubscript{\1}/g' out.tex
 # p tags
 sed -i 's/<p id=.question.>\(.*\)<\/p>/\\begin{abstract}\1\\end{abstract}/g; s/<p id=.attribute.>\(.*\)<\/p>/\\begin{flushright}\1\\end{flushright}\n/g' out.tex
 sed -i 's/<p>//g; s/<\/p>/\\\\\n/g;' out.tex
@@ -64,20 +67,25 @@ done
 # img tags
 sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=2.8cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
 
+
 today=$(date +%y%m%d)
 outfile="$dir/whatif$today"
 #echo "saving to $outfile.{tex,pdf}"
+
 echo "$today $url" >> $urlfile
 
 echo '''
 \documentclass{article}
 \usepackage{graphicx}
+\usepackage{fixltx2e}
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=black]{hyperref}
 \begin{document}
 ''' > "$outfile.tex"
+
 cat out.tex >> "$outfile.tex"
+
 echo '\end{document}' >> "$outfile.tex"
 
-pdflatex -output-directory $dir/xkcd $outfile.tex
-lpr "xkcd/$outfile.pdf"
+pdflatex -interaction batchmode -output-directory $dir $outfile.tex
+lpr "$outfile.pdf"
 
