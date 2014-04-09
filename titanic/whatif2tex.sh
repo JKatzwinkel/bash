@@ -47,8 +47,12 @@ sed -i 's/<\/*article[^<>]*>//g; s/<h1>\(.*\)<\/h1>/\\section*{\1}/g' out.tex
 sed -i "s/&#39;/'/g; s/&quot;/\"/g" out.tex
 # resolve painful latex pitfall characters:
 sed -i 's/#/\\#/g; s/—/ --- /g' out.tex
+# br tags
+sed -i 's/<br \/>/\\\\/g' out.tex
 # em tags
-sed -i 's/<em>\([^<]*\)<\/em>/\\textit{\1}/g' out.tex
+perl -pi.bck -e 's/<em>(.*?)<\/em>/\\textit{\1}/g' out.tex
+# strong tags
+perl -pi.bck -e 's/<strong>(.*?)<\/strong>/\\textbf{\1}/g' out.tex
 # sub tags
 sed -i 's/<sub>\([^<]*\)<\/sub>/\\textsubscript{\1}/g' out.tex
 # p tags
@@ -62,7 +66,7 @@ for i in 1 2 3 4 5; do
   sed -i 's/\(.*\)<a href=.\([^ ]*\)\">\(.*\)<\/a>/\1\3\\textsuperscript{(\\url{\2})}/g' out.tex
 done
 # img tags
-sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=3.5cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
+sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=3.7cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
 
 today=$(date +%y%m%d)
 outfile="$dir/whatif$today"
