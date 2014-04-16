@@ -46,7 +46,7 @@ echo """
 wget $url -q -O - \
 	| sed -n 's/.*class=.tt_news-date.*\(05.01.2014\).*/\1: /p
 	s/.*\(Gärtners kritisches Sonntagsfrühstück\):\([^<]*\)<\/div.*/<b>\1<\/b><h4>\2<\/h4>/p
-	/<div class=.tt_news-bodytext/,/^\s*$/ { 
+	/<div class=.tt_news-bodytext/,/.*tt_news-prevnextarticlelinks.*/ { 
 		/<p class/,/^\s*$/ {p}
 	}' \
 	| sed 's/<img[^>]*>//g' \

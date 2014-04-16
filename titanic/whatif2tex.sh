@@ -55,6 +55,8 @@ perl -pi.bck -e 's/<em>(.*?)<\/em>/\\textit{\1}/g' out.tex
 perl -pi.bck -e 's/<strong>(.*?)<\/strong>/\\textbf{\1}/g' out.tex
 # sub tags
 sed -i 's/<sub>\([^<]*\)<\/sub>/\\textsubscript{\1}/g' out.tex
+# sup tags
+sed -i 's/<sup>\([^<]*\)<\/sup>/\\textsuperscript{\1}/g' out.tex
 # p tags
 sed -i 's/<p id=.question.>\(.*\)<\/p>/\\begin{abstract}\1\\end{abstract}/g; s/<p id=.attribute.>\(.*\)<\/p>/\\begin{flushright}\1\\end{flushright}\n/g' out.tex
 sed -i 's/<p>//g; s/<\/p>/\\\\\n/g;' out.tex
