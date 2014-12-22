@@ -17,10 +17,10 @@ reported=$maildir/.seen.txt
 
 
 # sync imap repository
-offlineimap -o
+offlineimap -qo
 
 # generate temporary file name
-ftmp=/tmp/$(date | md5sum | cut -d' ' -f1).txt
+ftmp=$(tempfile)
 
 # check unread mails
 for i in $(ls -r $newmails); do
