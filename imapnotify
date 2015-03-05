@@ -1,0 +1,44 @@
+#!/bin/bash
+
+
+# location where imapoffline saves local repo (MailDir)
+# set either here or in configfile
+maildir=
+
+# read configs
+configfile=$HOME/.imapnotify
+[ -f $configfile ] && . $configfile
+
+# quit when imaprepo is not set
+[ -z "$maildir" ] && exit 1
+
+newmails=$maildir/INBOX/new
+reported=$maildir/.seen.txt
+
+
+# sync imap repository
+offlineimap -qo
+
+# generate temporary file name
+ftmp=$(tempfile)
+
+# check unread mails
+for i in $(ls -r $newmails); do
+	# extract information from mail source
+	info=$(grep  "\(^From:\|^Date:\|^Subject:\)" $newmails/$i | sort)
+	# format notification message
+	msg=$(echo $info | sed 's/Date: \(.*\) [-+][0-9]\{4\}\( (CET)\)* From: \(=?.*?= \)*\(.*\) Subject: \(.*\)/"\5" ---  \1 from \4/g' )
+	# write notification to temporary file
+	echo "$msg" >> $ftmp
+done
+
+# show only unknown notification messages
+touch $reported
+while read i; do
+	for jid in $jids; do
+		echo $i | sendxmpp -t $jid
+	done
+done < <(diff -u $reported $ftmp | sed -n 's/^+\([^+].*\)/\1/gp')
+
+cp $ftmp $reported
+rm $ftmp

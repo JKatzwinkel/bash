@@ -30,7 +30,6 @@ fi
 if [ ! -d "$dir/xkcd" ]; then
   mkdir -p "$dir/xkcd"
 fi
-
 # download images
 while read src; do
   # create issue image directory from image link locators
@@ -38,8 +37,7 @@ while read src; do
   if [ ! -d "$dir/xkcd$imdir" ]; then
     mkdir -p "$dir/xkcd$imdir"
   fi
-	echo "Save image under $dir/xkcd$src..."
-  wget -q "http://whatif.xkcd.com$src" -O $dir/xkcd$src
+  wget "http://whatif.xkcd.com$src" -O $dir/xkcd$src
 done < <(sed -n 's/<img .* src=\"\([^ ]*\)\">/\1/p' out.tex)
 
 ## html conversion:
@@ -48,9 +46,17 @@ sed -i 's/<\/*article[^<>]*>//g; s/<h1>\(.*\)<\/h1>/\\section*{\1}/g' out.tex
 # resolve html special char escapables
 sed -i "s/&#39;/'/g; s/&quot;/\"/g" out.tex
 # resolve painful latex pitfall characters:
-sed -i 's/#/\\#/g; s/—/ --- /g' out.tex
+sed -i 's/#/\\#/g; s/—/ --- /g; s/%/\\%/g' out.tex
+# br tags
+sed -i 's/<br \/>/\\\\/g' out.tex
 # em tags
-sed -i 's/<em>\([^<]*\)<\/em>/\\textit{\1}/g' out.tex
+perl -pi.bck -e 's/<em>(.*?)<\/em>/\\textit{\1}/g' out.tex
+# strong tags
+perl -pi.bck -e 's/<strong>(.*?)<\/strong>/\\textbf{\1}/g' out.tex
+# sub tags
+sed -i 's/<sub>\([^<]*\)<\/sub>/\\textsubscript{\1}/g' out.tex
+# sup tags
+sed -i 's/<sup>\([^<]*\)<\/sup>/\\textsuperscript{\1}/g' out.tex
 # p tags
 sed -i 's/<p id=.question.>\(.*\)<\/p>/\\begin{abstract}\1\\end{abstract}/g; s/<p id=.attribute.>\(.*\)<\/p>/\\begin{flushright}\1\\end{flushright}\n/g' out.tex
 sed -i 's/<p>//g; s/<\/p>/\\\\\n/g;' out.tex
@@ -62,22 +68,25 @@ for i in 1 2 3 4 5; do
   sed -i 's/\(.*\)<a href=.\([^ ]*\)\">\(.*\)<\/a>/\1\3\\textsuperscript{(\\url{\2})}/g' out.tex
 done
 # img tags
-sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=2.8cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
+sed -i 's#<img .* title=.\(.*\)\" src=\"\([^ ]*\)\">#\\begin{center}\\includegraphics[width=3.7cm]\{'${dir}/xkcd'\2\}\\footnote{\1}\\end{center}\n#g' out.tex
 
 today=$(date +%y%m%d)
 outfile="$dir/whatif$today"
 #echo "saving to $outfile.{tex,pdf}"
-echo "$today $url" >> $urlfile
 
 echo '''
 \documentclass{article}
 \usepackage{graphicx}
+\usepackage{fixltx2e}
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=black]{hyperref}
 \begin{document}
 ''' > "$outfile.tex"
 cat out.tex >> "$outfile.tex"
 echo '\end{document}' >> "$outfile.tex"
 
-pdflatex -output-directory $dir/xkcd $outfile.tex
-lpr "xkcd/$outfile.pdf"
-
+pdflatex -interaction batchmode -output-directory $dir $outfile.tex
+lpr "$outfile.pdf"
+# if evth went fine, save url as known
+if [ "$?" -eq 0 ]; then
+  echo "$today $url" >> $urlfile
+fi
