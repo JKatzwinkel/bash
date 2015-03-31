@@ -1,0 +1,89 @@
+#!/bin/bash
+
+
+# location where imapoffline saves local repo (MailDir)
+# set either here or in configfile
+maildir=
+
+# read configs
+configfile=$HOME/.imapnotify
+[ -f $configfile ] && . $configfile
+
+# quit when imaprepo is not set
+[ -z "$maildir" ] && exit 1
+
+newmails=$maildir/INBOX/new
+reported=$maildir/.seen.txt
+
+
+# kill any running offlineimap instance
+#[ ! -z "$(pidof offlineimap)" ] && killall offlineimap # pointless, offlineimap runs in python
+while read p; do
+	oipid=$(echo $p |  sed -n 's/^\([0-9]\+\).*/\1/gp')
+	[ ! -z "$(ps ax | grep '^\s*'$oipid)" ] && kill $oipid && echo "kill offlineimap instance with id $oipid."
+done < <(ps ax | grep "python.*offlineimap")
+
+# sync imap repository
+offlineimap -qo
+
+# generate temporary file name
+ftmp=$(mktemp)
+
+# perl alias for quoted printable decoding [from https://gist.github.com/jjarmoc/1571540]
+shopt -s expand_aliases
+alias qpd='perl -MMIME::QuotedPrint -pe '\''$_=MIME::QuotedPrint::decode($_);'\'''
+
+# prepare some regular expressions
+# fields to be extracted from mbox mail header
+fields="\(From\|Date\|Subject\): "
+# base64 sequences
+u8b="=?\w\{3\}-[0-9]\+?b?" # utf-8 binary encoding tag
+b4="[a-z0-9+/]\{4\}" # block of 4
+b3="[a-z0-9+/]\{3\}=" # padded remainder of 3
+b2="[a-z0-9+/]\{2\}==" # padded remainder of 2
+
+# check unread mails
+while read i; do
+	# extract information from mail source, handle multiline subjects and such
+	info=$(sed -n "/^${fields}/,/^\S/p" "$i" | head -n -1 | sed ':a;N;$!ba;s/\s*\n\s\s*//g' | grep "^${fields}\S" | sort)
+	# format notification message
+	#msg=$(echo $info | sed 's/Date: \(.*\) [-+][0-9]\{4\}\( (CET)\| (UTC)\)* From: \(=?.*?= \)*\(.*\) Subject: \(.*\)/"\5" ---  \1 from \4/g' )
+	msg=$(echo $info | sed 's/Date: \(.*\):[0-5][0-9] [-+][0-9]\{4\} *\((\(CET\|UTC\|PDT\))\)\? \?From: *\(.*\) Subject: \(.*\)/❝\5❞ ⌚⏳⏴⏵⌚⌛  \1 ✍✎✏ \4/g' )
+	# remove field names left over due to multiple occurence in mbox header
+	#msg=$(echo $msg | sed "s/${fields}/⋃/g")
+	# decode utf-8-b (base64) encoding
+	# look for =?UTF-8?B? like patterns. if occuring, engage in base64 string detection
+	if [ -n "$(echo $msg | grep -io "${u8b}")" ]; then 
+		# remove infix encoding tags (=?UTF-8?B? in the middle of what is likely base64. those are only in there because we collapsed multiline strings
+		msg=$(echo $msg | sed "s/\([a-z0-9+/=]\)${u8b}/\1/Ig" | sed 's/?=\([a-z0-9+/=]\)/\1/Ig')
+		b64=$(echo $msg | sed "s/.*${u8b}\(\(\(${b4}\)\+\(${b2}\|${b3}\|${b4}\)\)\+\)?=.*/\1/Ig" )
+		for b in $b64; do
+			plain=$(echo $b | base64 -d)
+			if [[ $? -eq 0 ]]; then
+				msg=$(echo $msg | sed "s#${u8b}${b}?=#${plain}#Ig")
+			fi
+		done
+	else
+		# strip iso-8859 and utf-8 quoted printable tags
+		msg=$(echo $msg | sed 's/=?\w\{3\}-[0-9]\+\(-[0-9]\+\)\??q?//Ig' | sed 's/?=//g' | tr '_' ' ')
+		# decode quoted printable
+		msg=$(echo $msg | qpd)
+	fi
+	
+	# write notification to temporary file
+	echo "$msg" >> $ftmp
+done < <(ls -r $newmails)
+
+exit 0
+
+# show only unknown notification messages
+touch $reported
+while read i; do
+	for jid in $jids; do
+		echo ✉ $i | sendxmpp -t $jid
+	done
+	echo "New Mail: $i"
+done < <(diff -u $reported $ftmp | sed -n 's/^+\([^+].*\)/\1/gp')
+
+cp $ftmp $reported
+rm $ftmp
