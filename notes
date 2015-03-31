@@ -2,6 +2,8 @@
 
 # read file line by line
 while read line; do ...; done < filename
+# read command output line by line
+while read line; do ...; done < <(...)
 
 # reduce pdf file size
 gs -sDEVICE=pdfwrite -dPDFSETTINGS=/screen -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=output.pdf input.pdf
@@ -33,6 +35,10 @@ echo ${#arr[@]} #length
 echo ${#arr[$i]} # field at position $i starting with 0
 #fixed prefix:
 array=$( "${array[@]/%/_content}" )
+
+# default values (optional command line arguments etc.)
+echo "first parameter: ${1-None}"
+
 
 # http://wiki.bash-hackers.org/commands/builtin/printf
 printf "%5s" $i # preserver 5 chars for string variable, align right
