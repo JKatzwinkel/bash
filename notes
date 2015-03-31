@@ -1,7 +1,13 @@
 #!/bin/bash
 
+# observe directory and show changes:
+watch -d ls -l <path>
+
 # read file line by line
 while read line; do ...; done < filename
+
+# read command outputs line by line
+while read -d '' -r line; do ...; done < <(command)
 
 # reduce pdf file size
 gs -sDEVICE=pdfwrite -dPDFSETTINGS=/screen -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=output.pdf input.pdf
@@ -30,7 +36,7 @@ ${string%substring}  # delete shortest substring from back
 arr=( $(echo "eins zwei" | grep -o "[^ ]*") )
 echo ${arr[@]} #entire array
 echo ${#arr[@]} #length
-echo ${#arr[$i]} # field at position $i starting with 0
+echo ${arr[$i]} # field at position $i starting with 0
 #fixed prefix:
 array=$( "${array[@]/%/_content}" )
 
