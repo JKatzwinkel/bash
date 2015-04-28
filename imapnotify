@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # location where imapoffline saves local repo (MailDir)
 # set either here or in configfile
 maildir=
@@ -15,9 +14,7 @@ configfile=$HOME/.imapnotify
 newmails=$maildir/INBOX/new
 reported=$maildir/.seen.txt
 
-
 # kill any running offlineimap instance
-#[ ! -z "$(pidof offlineimap)" ] && killall offlineimap # pointless, offlineimap runs in python
 while read p; do
 	oipid=$(echo $p |  sed -n 's/^\([0-9]\+\).*/\1/gp')
 	[ ! -z "$(ps ax | grep '^\s*'$oipid)" ] && kill $oipid && echo "kill offlineimap instance with id $oipid."
@@ -41,22 +38,23 @@ u8b="=?\w\{3\}-[0-9]\+?b?" # utf-8 binary encoding tag
 b4="[a-z0-9+/]\{4\}" # block of 4
 b3="[a-z0-9+/]\{3\}=" # padded remainder of 3
 b2="[a-z0-9+/]\{2\}==" # padded remainder of 2
+b64field="${u8b}\(\(\(${b4}\)\+\(${b2}\|${b3}\|${b4}\)\)\+\)?="
 
 # check unread mails
-while read i; do
+for i in $(ls -r $newmails); do
 	# extract information from mail source, handle multiline subjects and such
-	info=$(sed -n "/^${fields}/,/^\S/p" "$i" | head -n -1 | sed ':a;N;$!ba;s/\s*\n\s\s*//g' | grep "^${fields}\S" | sort)
+	info=$(sed -n "/^${fields}/,/^\S/p" "$newmails/$i" | grep "^\(${fields}\|\s\)" | sed ':a;N;$!ba;s/\s*\n\s\s*//g' | grep "^${fields}\s*\S" | sort)
 	# format notification message
-	#msg=$(echo $info | sed 's/Date: \(.*\) [-+][0-9]\{4\}\( (CET)\| (UTC)\)* From: \(=?.*?= \)*\(.*\) Subject: \(.*\)/"\5" ---  \1 from \4/g' )
-	msg=$(echo $info | sed 's/Date: \(.*\):[0-5][0-9] [-+][0-9]\{4\} *\((\(CET\|UTC\|PDT\))\)\? \?From: *\(.*\) Subject: \(.*\)/❝\5❞ ⌚⏳⏴⏵⌚⌛  \1 ✍✎✏ \4/g' )
+	msg=$(echo $info | sed 's/Date: \(.*\):[0-5][0-9] [-+][0-9]\{4\} *\((\(CET\|UTC\|PDT\))\)\? \?From: *\(.*\) Subject: \(.*\)/❝\5❞ ⌛ \1 ✍ \4/g' )
 	# remove field names left over due to multiple occurence in mbox header
-	#msg=$(echo $msg | sed "s/${fields}/⋃/g")
+	msg=$(echo $msg | sed "s/${fields}/⋃ /g")
 	# decode utf-8-b (base64) encoding
 	# look for =?UTF-8?B? like patterns. if occuring, engage in base64 string detection
 	if [ -n "$(echo $msg | grep -io "${u8b}")" ]; then 
 		# remove infix encoding tags (=?UTF-8?B? in the middle of what is likely base64. those are only in there because we collapsed multiline strings
 		msg=$(echo $msg | sed "s/\([a-z0-9+/=]\)${u8b}/\1/Ig" | sed 's/?=\([a-z0-9+/=]\)/\1/Ig')
-		b64=$(echo $msg | sed "s/.*${u8b}\(\(\(${b4}\)\+\(${b2}\|${b3}\|${b4}\)\)\+\)?=.*/\1/Ig" )
+		# base64 encoded contents
+		b64=$(echo $msg | grep -io "$b64field" | sed "s/${b64field}/\1/Ig" )
 		for b in $b64; do
 			plain=$(echo $b | base64 -d)
 			if [[ $? -eq 0 ]]; then
@@ -72,9 +70,7 @@ while read i; do
 	
 	# write notification to temporary file
 	echo "$msg" >> $ftmp
-done < <(ls -r $newmails)
-
-exit 0
+done
 
 # show only unknown notification messages
 touch $reported
