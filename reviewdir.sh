@@ -81,7 +81,7 @@ while true; do
 		eyeD3 -l LEVEL:error -a "$ta" -t "$tt" "$curfile"
 	elif [ "$i" = "c" ]; then
 		if [ -n "$cpdir" ]; then
-			echoboxed "│ > Copying $(basename "$curfile")..." $hdw
+			echoboxed "> Copying $(basename "$curfile")..." $hdw
 			cp "$curfile" "$cpdir"
 		fi
 	fi
