@@ -45,7 +45,8 @@ array=$( "${array[@]/%/_content}" )
 
 # default values (optional command line arguments etc.)
 echo "first parameter: ${1-None}"
-
+# parameter at last position:
+echo "last parameter: ${!#}"
 
 # http://wiki.bash-hackers.org/commands/builtin/printf
 printf "%5s" $i # preserver 5 chars for string variable, align right

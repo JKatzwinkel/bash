@@ -33,6 +33,14 @@ _filename () {
 	echo ${field#file }
 }
 
+echoboxed () {
+	echo -en "│ $1"
+	[ $# -lt 2 ] && echo && return
+	# sequence goes to <last parameter> - <length of first parameter> + 1
+	for j in $(seq $(( ${!#} - ${#1} + 1 ))); do echo -n ' '; done
+	echo │
+}
+
 latest=
 while true; do
 	cmus-remote -C "view sorted"
@@ -51,26 +59,29 @@ while true; do
 	hdw=$(echo $(( $twid < $hdw ? $twid : $hdw ))) # compute max width (terminal width)
 	# begin bounding box
 	echo -n ┌ ;for j in $(seq $hdw); do echo -n "─"; done && echo ──┐
-	echo "│ $mp3info"
-	echo │ $fileinfo
-	echo │ $flocinfo
+	echoboxed "$mp3info" $hdw
+	echoboxed "$fileinfo" $hdw
+	echoboxed "$flocinfo" $hdw
 	echo -n ├ && for j in $(seq $hdw); do echo -n "─"; done && echo ──┤
-	echo -n "│ > What to do? [K]eep/[d]elete/[m]odify$([ -n "$cpdir" ]&&echo /[c]opy) > "
+	prompt="> What to do? [K]eep/[d]elete/[m]odify$([ -n "$cpdir" ]&&echo /[c]opy) > "
+	echoboxed "$prompt" $hdw
+	# move cursor to right position
+	tput cuu1; tput cuf $(( ${#prompt} + 2))
 	read i
 	if [ "$i" = "d" ]; then
-		echo "│ > removing $(basename "$curfile")"
+		echoboxed "> removing $(basename "$curfile")" $hdw
 		rm "$curfile"
 	elif [ "$i" = "q" ]; then
 		exit 0
 	elif [ "$i" = "m" ]; then
-		echo -n "│ > Input ID3 tags like this: <Artist> - <Title>: "
+		echo -n "> Input ID3 tags like this: <Artist> - <Title>: "
 		read tags
 		ta=$(echo $tags | cut -d- -f 1)
 		tt=$(echo $tags | cut -d- -f 2-)
 		eyeD3 -l LEVEL:error -a "$ta" -t "$tt" "$curfile"
 	elif [ "$i" = "c" ]; then
 		if [ -n "$cpdir" ]; then
-			echo "│ > Copying $(basename "$curfile")..."
+			echoboxed "│ > Copying $(basename "$curfile")..." $hdw
 			cp "$curfile" "$cpdir"
 		fi
 	fi
