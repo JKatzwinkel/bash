@@ -58,7 +58,7 @@ while true; do
 	echo -n "│ > What to do? [K]eep/[d]elete/[m]odify$([ -n "$cpdir" ]&&echo /[c]opy) > "
 	read i
 	if [ "$i" = "d" ]; then
-		echo "│ > removing $curfile"
+		echo "│ > removing $(basename "$curfile")"
 		rm "$curfile"
 	elif [ "$i" = "q" ]; then
 		exit 0
@@ -70,7 +70,7 @@ while true; do
 		eyeD3 -l LEVEL:error -a "$ta" -t "$tt" "$curfile"
 	elif [ "$i" = "c" ]; then
 		if [ -n "$cpdir" ]; then
-			echo "│ > Copying $(basename $curfile)..."
+			echo "│ > Copying $(basename "$curfile")..."
 			cp "$curfile" "$cpdir"
 		fi
 	fi
