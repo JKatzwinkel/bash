@@ -29,7 +29,8 @@ PS1='\u@\h:$(_PS1 "$PWD" 20)\$ '
 
 
 # string operations
-${stringZ:1} # substring beginning with second character
+${#string} # length
+${string:1} # substring beginning with second character
 ${string#substring}  # delete shortest substring from front
 ${string##substring}  # delete longest substring from front
 ${string%substring}  # delete shortest substring from back
